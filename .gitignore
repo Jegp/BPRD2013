@@ -4,3 +4,9 @@
 *.exe
 *.png
 *.class
+*.pdf
+*.toc
+*.report
+*.log
+*.aux
+*.out
