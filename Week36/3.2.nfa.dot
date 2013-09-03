@@ -1,0 +1,9 @@
+digraph nfa {
+
+	 Start -> { a b }[label=ε];
+	 a -> b [label=b];
+	 a -> End [label=ε];
+	 b -> Start [label=ε];
+	 b -> End [label=ε];
+
+}

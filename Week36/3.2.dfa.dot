@@ -1,0 +1,6 @@
+digraph dfa {
+
+	{Start b} -> a [label=a];
+	{a b Start} -> b [label=b];
+
+}
