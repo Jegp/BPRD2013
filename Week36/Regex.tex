@@ -15,7 +15,18 @@ DFA: \includegraphics[height=200px]{3-2-dfa}
 
 \section*{3.3}
 
+\begin{tabular}{l l l}
+\textbf{Label} & \textbf{Input} & \textbf{Derivation} \\
+EXPR\#0 & LET z = (17) IN z + 2 * 3 END EOF & MAIN EXPR\#1 EOF \\
+EXPR\#1 & LET z = (17) IN z + 2 * 3 END & LET NAME = EXPR\#2 IN EXPR\#3 \\
+EXPR\#3 & z + 2 * 3 & VAR z + EXPR\#4 \\
+EXPR\#4 & 2 * 3 & CstI 2 TIMES CstI 3 \\
+EXPR\#3 & z + & Var z ADD EXPR\#4 \\
+EXPR\#2 & (17) IN & CstI 17 \\
+NAME    & z & VAR z \\
+-       & - & MAIN
 
+\end{tabular}
 
 \section*{3.4}
 
