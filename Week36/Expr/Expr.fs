@@ -1,4 +1,4 @@
-(* File Expr/Expr.fs *) 
+(* File Expr/Expr.fs *)
 
 (* Simple expression language with various evaluators and compilers *)
 
@@ -39,6 +39,7 @@ let rec fmt1 (e : expr) : string =
             String.concat " " ["let"; x; "="; fmt1 erhs;
                                "in"; fmt1 ebody; "end"]
       | Prim(ope, e1, e2) -> String.concat "" ["("; fmt1 e1; ope; fmt1 e2; ")"]
+      | ITE(bool, e1, e2) -> "if " + fmt1 bool + " then " + fmt1 e1 + " else " + fmt1 e2
 
 (* Format expressions as strings, avoiding excess parentheses *)
 
@@ -83,6 +84,8 @@ let rec eval (e : expr) (env : (string * int) list) : int =
       | Prim("*", e1, e2) -> eval e1 env * eval e2 env
       | Prim("-", e1, e2) -> eval e1 env - eval e2 env
       | Prim _            -> raise (Failure "unknown primitive")
+      | ITE(bool, e1, e2) -> if not (eval bool env = 0) then eval e1 env
+                             else eval e2 env
 
 (* Evaluate in empty environment: expression must have no free variables: *)
 
