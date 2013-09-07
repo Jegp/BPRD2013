@@ -1,9 +1,13 @@
 digraph nfa {
 
-	 Start -> { a b }[label=ε];
-	 a -> b [label=b];
-	 a -> End [label=ε];
-	 b -> Start [label=ε];
-	 b -> End [label=ε];
-
+	node [peripheries=0] {Start};
+	node [peripheries=1] {};
+	Start -> Whatever;
+	Whatever [label=" "];
+	Whatever -> { a b }[label=ε];
+	a -> b [label=b];
+	a -> End [label=ε];
+	b -> Whatever [labelε];
+	b -> End [label=ε];
+	End [peripheries=2];
 }

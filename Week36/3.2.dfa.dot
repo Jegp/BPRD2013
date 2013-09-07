@@ -1,6 +1,12 @@
 digraph dfa {
 
+	node [shape=point,color=white] {Waaaaaargh};
+	node [shape=circle,color=black];
+	Waaaaaargh -> Start [label=Start];
+	Start [label=" "];
 	{Start b} -> a [label=a];
 	{a b Start} -> b [label=b];
+	a [peripheries=2];
+	b [peripheries=2];
 
 }
