@@ -7,7 +7,7 @@ digraph nfa {
 	Whatever -> { a b }[label=ε];
 	a -> b [label=b];
 	a -> End [label=ε];
-	b -> Whatever [labelε];
+	b -> Whatever [label=ε];
 	b -> End [label=ε];
 	End [peripheries=2];
 }
