@@ -4,7 +4,8 @@ digraph nfa {
 	node [peripheries=1] {};
 	Start -> Whatever;
 	Whatever [label=" "];
-	Whatever -> { a b }[label=ε];
+	Whatever -> a [label=a];
+	Whatever -> b [label=ε];
 	a -> b [label=b];
 	a -> End [label=ε];
 	b -> Whatever [label=ε];
