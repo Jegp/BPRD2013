@@ -65,6 +65,8 @@ type nonTerminalId =
     | NONTERM_Main
     | NONTERM_Expr
     | NONTERM_AtExpr
+    | NONTERM_Names
+    | NONTERM_AtExprLst
     | NONTERM_AppExpr
     | NONTERM_Const
 /// This function maps integers indexes to symbolic token ids

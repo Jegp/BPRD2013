@@ -1,4 +1,4 @@
-1 "FunLex.fsl"
+# 1 "FunLex.fsl"
  
  (* File Fun/Funlex.fsl 
     Lexer for a simple functional language (micro-ML) 
