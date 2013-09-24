@@ -1,0 +1,41 @@
+\documentclass{article}
+
+\usepackage{graphicx} % Required to insert images
+\usepackage{courier} % Required for the courier font
+
+\begin{document}
+
+\title{Week 38}
+\author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
+\maketitle
+\section*{Exercise 6.1 (PLC)}
+\subsection*{Is the result of the third one as expected?}
+\begin{verbatim}
+1 let add x = let f y = x+y in f end
+2 in let addtwo = add 2
+3    in let x = 77 in addtwo 5 end
+4    end
+5 end
+\end{verbatim}
+We would expect $add\ x$ to return a function $f\ of\ y$ that in turn returns x+y.
+We would expect $addtwo$ to increment its (integer) input by 2, and the entire expression
+to return 7.
+The $let\ x = 77$ in line 3 means nothing. x from line 1 is not overwritten, only "shadowed".
+
+\subsection*{Explain the result of the last one}
+\begin{verbatim}
+1 let add x = let f y = x+y in f end
+2 in add 2 end
+\end{verbatim}
+The result is a function (described as a Closure in our object language) of
+type $(int \to int)$ As in the previous expression, $add\ x$ returns a function
+$f\ of\ y$ that returns $x+y$. The result of the entire expression is then the
+function of an integer, that returns the sum of 2 and that integer.
+In our object language, that is the closure
+$$("f","y", Prim("+", Var "x", Var "y")$$
+with an environment $$\rho [x \mapsto 2]$$
+\textit{\small{(feel free to comment the notation.)}}
+
+The environment also contains the closure that defines the $add\ x$ function,
+though we will not need it to use the function returned by the expression.
+\end{document}
