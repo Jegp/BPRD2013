@@ -1,0 +1,114 @@
+\documentclass[a4paper]{article}
+
+\usepackage{graphicx} % Required to insert images
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{rotating}
+
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[utf8]{inputenc}
+
+\usepackage[ligature,inference,reserved,shorthand]{semantic}
+
+\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+
+% Grammars
+\def\grammar#1#2{%
+  \vspace{1em}
+  \begin{tabular}{r@{$\quad$}r@{$\quad$}l@{$\qquad$}l}
+  $#1$ & $::=$ & & \emph{#2}\\
+}
+\def\endgrammar{\end{tabular}\vspace{1em}}
+\def\prod#1#2{&$\mid$&$#1$&\emph{#2}}
+
+% Meta
+\newcommand{\RULE}[1]{\textsc{#1}}
+\newcommand{\SUBST}[2]{\left[#1\right]#2}
+
+% Syntax styles
+\colorlet{term}{red}
+\newcommand{\kwd}[1]{\ensuremath{\mathsf{\textcolor{term}{\underline{#1}}}}}
+\newcommand{\expr}[1]{\ensuremath{\textcolor{term}{#1}}}
+\newcommand{\type}[1]{\ensuremath{\textcolor{blue}{#1}}}
+\newcommand{\context}[1]{\ensuremath{\textcolor{black}{#1}}}
+\newcommand{\scheme}[1]{\ensuremath{\textcolor{ForestGreen}{#1}}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+
+\newcommand{\const}[1]{\mathsf{#1}}
+
+\newcommand{\typing}[3]{\ensuremath{#1\ \vdash\ #2\ :\ #3}}
+
+
+% Object language syntax
+\newcommand{\TRUE}{\ensuremath{\expr{\const{true}}}}
+\newcommand{\FALSE}{\ensuremath{\expr{\const{false}}}}
+\newcommand{\PLUS}[2]{#1\;\expr{+}\;#2}
+\newcommand{\LT}[2]{#1\;\expr{<}\;#2}
+\newcommand{\NUM}[1]{\expr{\const{#1}}}
+
+\newcommand\var[1]{\ensuremath{\expr{\mathsf{#1}}}}
+\newcommand{\app}[2]{#1\ #2}
+
+\newcommand{\IF}[3]{\kwd{if}\ #1\ \kwd{then}\ #2\ \kwd{else}\ #3}
+
+\newcommand{\LET}[3]{\kwd{let}\ #1\ \textcolor{term}{=}\ #2\ \kwd{in}\ #3\ \kwd{end}}
+\newcommand{\LETF}[4]{\kwd{let}\ #1\ #2\ \textcolor{term}{=}\ #3\ \kwd{in}\ #4\ \kwd{end}}
+
+% Object language types
+\newcommand\INT{\type{\const{int}}}
+\newcommand\BOOL{\type{\const{bool}}}
+\newcommand{\fn}[2]{#1\;\type{\to}\;#2}
+
+% Type schemes
+\newcommand\FORALL[2]{\scheme{\forall #1\;.\;#2}}
+\newcommand\ALPHAS[1][n]{\alpha_1,\ldots,\alpha_{#1}}
+
+%Contexts
+\newcommand{\EMPTY}{\context{\cdot}}
+\newcommand{\WITH}[2]{\context{#1\left[#2\right]}}
+\newcommand{\RHO}{\context{\rho}}
+\newcommand{\LOOKUP}[2]{#1\left(#2\right)}
+
+
+\title{A Tutorial on Polymorphic Type Derivations}
+\author{David Christiansen}
+\date{DRAFT of December 27, 2012}
+\begin{document}
+
+\title{Week 38}
+\author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
+\maketitle
+\section*{Exercise 6.1 (PLC)}
+\subsection*{Is the result of the third one as expected?}
+\begin{verbatim}
+1 let add x = let f y = x+y in f end
+2 in let addtwo = add 2
+3    in let x = 77 in addtwo 5 end
+4    end
+5 end
+\end{verbatim}
+We would expect $add\ x$ to return a function $f\ of\ y$ that in turn returns x+y.
+We would expect $addtwo$ to increment its (integer) input by 2, and the entire expression
+to return 7.
+The $let\ x = 77$ in line 3 means nothing. x from line 1 is not overwritten, only "shadowed".
+
+\subsection*{Explain the result of the last one}
+\begin{verbatim}
+1 let add x = let f y = x+y in f end
+2 in add 2 end
+\end{verbatim}
+The result is a function (described as a Closure in our object language) of
+type $(int \to int)$ As in the previous expression, $add\ x$ returns a function
+$f\ of\ y$ that returns $x+y$. The result of the entire expression is then the
+function of an integer, that returns the sum of 2 and that integer.
+In our object language, that is the closure
+$$("f","y", Prim("+", Var "x", Var "y")$$
+with an environment $$\rho [x \mapsto 2]$$
+\textit{\small{(feel free to comment the notation.)}}
+
+The environment also contains the closure that defines the $add\ x$ function,
+though we will not need it to use the function returned by the expression.
+\end{document}
