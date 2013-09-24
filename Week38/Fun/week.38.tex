@@ -1,8 +1,81 @@
-\documentclass{article}
+\documentclass[a4paper]{article}
 
 \usepackage{graphicx} % Required to insert images
-\usepackage{courier} % Required for the courier font
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{rotating}
 
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[utf8]{inputenc}
+
+\usepackage[ligature,inference,reserved,shorthand]{semantic}
+
+\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+
+% Grammars
+\def\grammar#1#2{%
+  \vspace{1em}
+  \begin{tabular}{r@{$\quad$}r@{$\quad$}l@{$\qquad$}l}
+  $#1$ & $::=$ & & \emph{#2}\\
+}
+\def\endgrammar{\end{tabular}\vspace{1em}}
+\def\prod#1#2{&$\mid$&$#1$&\emph{#2}}
+
+% Meta
+\newcommand{\RULE}[1]{\textsc{#1}}
+\newcommand{\SUBST}[2]{\left[#1\right]#2}
+
+% Syntax styles
+\colorlet{term}{red}
+\newcommand{\kwd}[1]{\ensuremath{\mathsf{\textcolor{term}{\underline{#1}}}}}
+\newcommand{\expr}[1]{\ensuremath{\textcolor{term}{#1}}}
+\newcommand{\type}[1]{\ensuremath{\textcolor{blue}{#1}}}
+\newcommand{\context}[1]{\ensuremath{\textcolor{black}{#1}}}
+\newcommand{\scheme}[1]{\ensuremath{\textcolor{ForestGreen}{#1}}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+
+\newcommand{\const}[1]{\mathsf{#1}}
+
+\newcommand{\typing}[3]{\ensuremath{#1\ \vdash\ #2\ :\ #3}}
+
+
+% Object language syntax
+\newcommand{\TRUE}{\ensuremath{\expr{\const{true}}}}
+\newcommand{\FALSE}{\ensuremath{\expr{\const{false}}}}
+\newcommand{\PLUS}[2]{#1\;\expr{+}\;#2}
+\newcommand{\LT}[2]{#1\;\expr{<}\;#2}
+\newcommand{\NUM}[1]{\expr{\const{#1}}}
+
+\newcommand\var[1]{\ensuremath{\expr{\mathsf{#1}}}}
+\newcommand{\app}[2]{#1\ #2}
+
+\newcommand{\IF}[3]{\kwd{if}\ #1\ \kwd{then}\ #2\ \kwd{else}\ #3}
+
+\newcommand{\LET}[3]{\kwd{let}\ #1\ \textcolor{term}{=}\ #2\ \kwd{in}\ #3\ \kwd{end}}
+\newcommand{\LETF}[4]{\kwd{let}\ #1\ #2\ \textcolor{term}{=}\ #3\ \kwd{in}\ #4\ \kwd{end}}
+
+% Object language types
+\newcommand\INT{\type{\const{int}}}
+\newcommand\BOOL{\type{\const{bool}}}
+\newcommand{\fn}[2]{#1\;\type{\to}\;#2}
+
+% Type schemes
+\newcommand\FORALL[2]{\scheme{\forall #1\;.\;#2}}
+\newcommand\ALPHAS[1][n]{\alpha_1,\ldots,\alpha_{#1}}
+
+%Contexts
+\newcommand{\EMPTY}{\context{\cdot}}
+\newcommand{\WITH}[2]{\context{#1\left[#2\right]}}
+\newcommand{\RHO}{\context{\rho}}
+\newcommand{\LOOKUP}[2]{#1\left(#2\right)}
+
+
+\title{A Tutorial on Polymorphic Type Derivations}
+\author{David Christiansen}
+\date{DRAFT of December 27, 2012}
 \begin{document}
 
 \title{Week 38}
