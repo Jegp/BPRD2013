@@ -9,7 +9,7 @@
 \usepackage{tabularx}
 \usepackage[utf8]{inputenc}
 
-\usepackage[ligature,inference,reserved,shorthand]{semantic}
+%\usepackage[ligature,inference,reserved,shorthand]{semantic}
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -111,4 +111,18 @@ with an environment $$\rho [x \mapsto 2]$$
 
 The environment also contains the closure that defines the $add\ x$ function,
 though we will not need it to use the function returned by the expression.
+
+\section*{Exercise 6.4 (PLC)}
+\begin{verbatim}
+1 let f x = 1
+2 in f f end
+\end{verbatim}
+Whatever is bound to x, the right-hand side of line 1 will always be valid, so
+for $f$ to be non-polymorphic would be unnecessarily restrictive.
+Also, $(f : \alpha \mapsto \ int)$.
+lars\\
+
+\hrule
+$\rho \vdash let f = er in eb end :t$
+$\PLUS{NUM{17}}{\NUM{25}}$
 \end{document}
