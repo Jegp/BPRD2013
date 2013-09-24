@@ -1,0 +1,1264 @@
+\documentclass[a4paper]{article}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{rotating}
+
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[utf8]{inputenc}
+
+\usepackage[ligature,inference,reserved,shorthand]{semantic}
+
+\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+
+% Grammars
+\def\grammar#1#2{%
+  \vspace{1em}
+  \begin{tabular}{r@{$\quad$}r@{$\quad$}l@{$\qquad$}l}
+  $#1$ & $::=$ & & \emph{#2}\\
+}
+\def\endgrammar{\end{tabular}\vspace{1em}}
+\def\prod#1#2{&$\mid$&$#1$&\emph{#2}}
+
+% Meta
+\newcommand{\RULE}[1]{\textsc{#1}}
+\newcommand{\SUBST}[2]{\left[#1\right]#2}
+
+% Syntax styles
+\colorlet{term}{red}
+\newcommand{\kwd}[1]{\ensuremath{\mathsf{\textcolor{term}{\underline{#1}}}}}
+\newcommand{\expr}[1]{\ensuremath{\textcolor{term}{#1}}}
+\newcommand{\type}[1]{\ensuremath{\textcolor{blue}{#1}}}
+\newcommand{\context}[1]{\ensuremath{\textcolor{black}{#1}}}
+\newcommand{\scheme}[1]{\ensuremath{\textcolor{ForestGreen}{#1}}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+
+\newcommand{\const}[1]{\mathsf{#1}}
+
+\newcommand{\typing}[3]{\ensuremath{#1\ \vdash\ #2\ :\ #3}}
+
+
+% Object language syntax
+\newcommand{\TRUE}{\ensuremath{\expr{\const{true}}}}
+\newcommand{\FALSE}{\ensuremath{\expr{\const{false}}}}
+\newcommand{\PLUS}[2]{#1\;\expr{+}\;#2}
+\newcommand{\LT}[2]{#1\;\expr{<}\;#2}
+\newcommand{\NUM}[1]{\expr{\const{#1}}}
+
+\newcommand\var[1]{\ensuremath{\expr{\mathsf{#1}}}}
+\newcommand{\app}[2]{#1\ #2}
+
+\newcommand{\IF}[3]{\kwd{if}\ #1\ \kwd{then}\ #2\ \kwd{else}\ #3}
+
+\newcommand{\LET}[3]{\kwd{let}\ #1\ \textcolor{term}{=}\ #2\ \kwd{in}\ #3\ \kwd{end}}
+\newcommand{\LETF}[4]{\kwd{let}\ #1\ #2\ \textcolor{term}{=}\ #3\ \kwd{in}\ #4\ \kwd{end}}
+
+% Object language types
+\newcommand\INT{\type{\const{int}}}
+\newcommand\BOOL{\type{\const{bool}}}
+\newcommand{\fn}[2]{#1\;\type{\to}\;#2}
+
+% Type schemes
+\newcommand\FORALL[2]{\scheme{\forall #1\;.\;#2}}
+\newcommand\ALPHAS[1][n]{\alpha_1,\ldots,\alpha_{#1}}
+
+%Contexts
+\newcommand{\EMPTY}{\context{\cdot}}
+\newcommand{\WITH}[2]{\context{#1\left[#2\right]}}
+\newcommand{\RHO}{\context{\rho}}
+\newcommand{\LOOKUP}[2]{#1\left(#2\right)}
+
+
+\title{A Tutorial on Polymorphic Type Derivations}
+\author{David Christiansen}
+\date{DRAFT of December 27, 2012}
+\begin{document}
+
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+
+\maketitle
+
+This is a tutorial on how to produce typing derivation trees for a simplified
+version of ML's type system. Rather than being incredibly precise about every
+detail, this tutorial will focus on building up an understanding of why the
+rules work as they do. This tutorial is based on the presentation of
+polymorphic typing in \emph{Programming Language Concepts}
+\citep{Sestoft2012}. For your convenience, the grammar and type system of the
+small version of ML used in this tutorial are reproduced in Appendix
+\ref{sec:formal-rules}.
+
+\paragraph{DRAFT}
+This version of the tutorial has been used for one semester, but may still
+contain minor errors or incomplete explanations. Please send any comments
+about the style in which it is written or any corrections to
+\texttt{drc@itu.dk}.
+
+\paragraph{Notational Conventions}
+When looking at a formal definition of a type system, it can be difficult at
+first to distinguish the different categories of symbols from each
+other. Rather than sweep this issue under the rug, colors and other
+typographical conventions are used to precisely indicate which category a
+symbol is a part of. The following table describes the applied conventions:
+\noindent
+\begin{tabularx}{\textwidth}{|L|l|L|}
+  \hline
+  \textbf{Category} & \textbf{Typeface} & \textbf{Examples}\\
+  \hline\hline
+  ML keywords & Red, underlined & \kwd{if}, \kwd{let}\\\hline
+  ML expressions & Red, sans-serif, upright &
+  $\PLUS{\NUM{17}}{\NUM{25}}$,
+  $\IF{\LT{\NUM{23}}{\NUM{42}}}{\NUM{13}}{\NUM{99}}$\\\hline
+  Variables representing expressions in rules& Italic roman red & $\expr{e_1}$, $\expr{e_2}$, $\expr{e_3}$ \\
+  \hline
+  ML Types & Blue, sans-serif, upright & $\INT$, $\BOOL$, $\fn{\type{\alpha}}{\INT}$\\
+  \hline
+  Variables representing ML types in rules & Italic roman blue& $\type{t_1}$\\
+  \hline
+  Type schemes and quantified type variables & Green &
+  $\FORALL{\alpha}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}$,
+  $\FORALL{\alpha}{\fn{\scheme{\alpha}}{\BOOL}}$,
+  $\FORALL{\alpha,\beta}{\fn{\fn{\scheme{\alpha}}{\scheme{\beta}}}{\scheme{\alpha}}}$\\
+  \hline
+\end{tabularx}
+
+\noindent
+The distinction between \emph{variables representing types or expressions} and
+\emph{actual types or expressions}, which is represented by writing the
+variables in italic type, is important.  A final proof will not contain any of
+the variables, as they are used to demonstrate the structure of the proof.
+
+\paragraph{What are we doing here, anyway?}
+It is important to have the right perspective when looking at typing rules and how to combine them.
+Typing rules serve two purposes: they serve as a notation for helping humans keep track of complicated ideas, and they aid communication of these complicated ideas between humans.
+Even though they are quite formal and their use is highly precise, they are not primarily intended for a computer.
+When we build up a tree structure of typing rules, we construct something called a \emph{typing derivation}.
+In ML, a typing derivation is a proof that some expression \emph{can have} some type, given a particular context, not that the expression can \emph{only} have that type or that the expression will have that type no matter where we encounter it.
+More formally, a derivation for $\typing{\RHO}{\expr{e}}{\type{t}}$ is a proof that in some context $\RHO$ (which assigns types to variables in $\expr{e}$), we can show that $\expr{e}$ can have (at least) the type $\type{t}$, and possibly others.
+This proof is something that we, as creative, thinking beings, need to come up with.
+We cannot necessarily construct it by mechanically following rules.
+In fact, the discovery of an efficient algorithm for type-checking in some type system is a discovery that is at least as important as that of the type system, because it enables it to be actually used, and these algorithms can easily be non-obvious.
+For an example of such an algorithm, see Section 6.4 of \citet{Sestoft2012}.
+So, to recap, we are constructing a proof, for other humans, that a particular expression can have a particular type in ML.
+
+
+\section{Examples without let}
+\label{sec:examples-without-let}
+
+We begin by using some simple examples to demonstrate how typing rules fit
+together, without using more advanced features of the type system.
+
+If we want to show that $\IF{\LT{\NUM{2}}{\NUM{3}}}{\NUM{42}}{\NUM{-5}}$ can have type $\INT$ in the empty typing context (called ``$\EMPTY$'', which is just a dot), we begin by creating a tree with this fact at the bottom.
+
+\begin{displaymath}
+  \inference{?}{
+    \typing{\EMPTY}{
+      \IF{\LT{\NUM{2}}{\NUM{3}}}{\NUM{42}}{\NUM{-5}}
+    }{
+      \INT
+    }
+  }
+\end{displaymath}
+
+Inspecting our typing rules, we see that only one of them has an \kwd{if}-expression at the bottom: rule \RULE{p7}. Applying this rule gives us three new typings to prove:
+\begin{itemize}
+\item $\typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}{\BOOL}$
+\item $\typing{\EMPTY}{\NUM{42}}{\INT}$
+\item $\typing{\EMPTY}{\NUM{-5}}{\INT}$
+\end{itemize}
+Note that the variable $\type{t}$ in \RULE{p7} has been filled out with
+\INT. We do this because \INT\ is the only type can possibly be used, because the same $\type{t}$ occurs on the right-hand-side of the colon in the bottom of \RULE{p7}. Our derivation now looks like:
+\begin{displaymath}
+  \inference[\RULE{p7}]{
+    \typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}{\BOOL} &
+    \typing{\EMPTY}{\NUM{42}}{\INT} &
+    \typing{\EMPTY}{\NUM{-5}}{\INT}
+  }{
+    \typing{\EMPTY}{
+      \IF{\LT{\NUM{2}}{\NUM{3}}}{\NUM{42}}{\NUM{-5}}
+    }{
+      \INT
+    }
+  }
+\end{displaymath}
+The two branches of the $\kwd{if}$-expression are easy to show -- as they are
+integer literals, we merely need to apply rule \RULE{p1} to them. Rule
+\RULE{p5} is the only one that has a less-than expression on the bottom, so we know that we will use it for the condition of our \kwd{if}-expression. We now have the partial derivation:
+\begin{displaymath}
+  \inference[\RULE{p7}]{
+    \inference[\RULE{p5}]{?}{\typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}{\BOOL}} &
+    \inference[\RULE{p1}]{}{\typing{\EMPTY}{\NUM{42}}{\INT}} &
+    \inference[\RULE{p1}]{}{\typing{\EMPTY}{\NUM{-5}}{\INT}}
+  }{
+    \typing{\EMPTY}{
+      \IF{\LT{\NUM{2}}{\NUM{3}}}{\NUM{42}}{\NUM{-5}}
+    }{
+      \INT
+    }
+  }
+\end{displaymath}
+We now need only to show that the arguments to $\LT{}{}$ can both be integers
+in the empty environment. We do this by using rule \RULE{p1} twice, completing
+the derivation:\\
+\begin{displaymath}
+\resizebox{1.0\textwidth}{!}{
+  \inference[\RULE{p7}]{
+    \inference[\RULE{p5}]{
+      \inference[\RULE{p1}]{}{
+        \typing{\EMPTY}{\NUM{2}}{\INT}
+      } &
+      \inference[\RULE{p1}]{}{
+        \typing{\EMPTY}{\NUM{3}}{\INT}
+      }
+    }{\typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}{\BOOL}} &
+    \inference[\RULE{p1}]{}{\typing{\EMPTY}{\NUM{42}}{\INT}} &
+    \inference[\RULE{p1}]{}{\typing{\EMPTY}{\NUM{-5}}{\INT}}
+  }{
+    \typing{\EMPTY}{
+      \IF{\LT{\NUM{2}}{\NUM{3}}}{\NUM{42}}{\NUM{-5}}
+    }{
+      \INT
+    }
+  }
+}
+\end{displaymath}
+
+On the other hand, we cannot argue that \PLUS{\TRUE}{\NUM{7}} has any
+type. Let's walk through the process to see where it goes wrong. We begin with
+a tree that has our desired term on the bottom. For now, we'll represent the
+result type with a variable $\type{t}$ that we'll attempt to fill in later. If
+we can't fill it in, then our attempt to find a type for the expression
+failed. We'll use some arbitrary context $\RHO$ to begin with.
+\begin{displaymath}
+  \inference{?}{
+    \typing{\RHO}{\PLUS{\TRUE}{\NUM{7}}}{\type{t}}
+  }
+\end{displaymath}
+Just as before, we examine our typing rules to find one whose bottom matches
+the expression that we're finding a derivation for.  In other words, it needs
+to have a $\PLUS{}{}$ in it. There is only one: \RULE{p4}. Filling in its
+premises yields:
+\begin{displaymath}
+  \inference[\RULE{p4}]{
+    \typing{\RHO}{\TRUE}{\INT} &
+    \typing{\RHO}{\NUM{7}}{\INT}
+  }{
+    \typing{\RHO}{\PLUS{\TRUE}{\NUM{7}}}{\INT}
+  }
+\end{displaymath}
+We have replaced our variable $\type{t}$ with the concrete type \INT, because
+that is the result specified by \RULE{p4}. Unfortunately, we've reached an
+impasse - there are no rules that allow us to give \TRUE\ the type \INT.
+
+\section{Types vs. type schemes}
+\label{sec:types-vs.-type}
+
+In our typing rules, we distinguish between \emph{types} and \emph{type
+  schemes}. The difference is that type schemes are polymorphic -- their
+variables can be instantiated to a number of different types. An important
+point is that not every type variable creates polymorphism -- only those that
+are listed between the $\scheme{\forall}$ and the dot. In this tutorial, they
+are green.  Other type variables that are not listed after the
+$\scheme{\forall}$ are simply useless, because there is no way to replace
+them with concrete types.
+
+Two of the rules, \RULE{p6} and \RULE{p8}, allow adding a $\scheme\forall$ and
+any number of variables to the beginning of a type. Using these rules enables
+us to create useful polymorphic types.  This distinction between the
+quantified type variables and free type variables (that is, between the green
+type variables and the blue type variables) is used to ensure that functions
+and variables are first polymorphic \emph{after} they are defined and not in
+their own bodies, according to the rules in \citet{Sestoft2012}, Section 6.2.
+
+\section{Anatomy of a typing rule}
+\label{sec:anatomy-typing-rule}
+
+Before we continue to more complex examples, let's take a minute to examine
+our typing rules to really understand what they are saying. At the top level,
+a typing rule gives a list of zero or more conditions that must be satisfied
+in order to make some conclusion. These conditions, called \emph{premises},
+are written above the line. The conclusion is written below the line. In other
+words, in the following rule \RULE{Foo}, $P_1$, $P_2$, and $P_3$ are the
+premises and $C$ is the conclusion.
+\begin{displaymath}
+  \inference[\RULE{Foo}]{P_1 & P_2 & P_3}{C}
+\end{displaymath}
+Sometimes, if the premises are long, they may take more than one line:
+\begin{displaymath}
+  \inference[\RULE{Foo}]{P_1 & P_2 \\ P_3}{C}
+\end{displaymath}
+This means exactly the same thing. A typing rule means that \emph{all}
+premises must be proved in order for the conclusion to also be considered
+proven.
+
+In our typing rules, we have the following things:
+\begin{description}
+\item[Typings] relate an environment, and expression, and a type. The typing \[\typing{\RHO}{\expr{e}}{\type{t}}\] states that $\expr{e}$ can have the type $\type{t}$ in an environment $\RHO$.
+\item[Substitutions] take a scheme and replace its quantified (that is, green) variables with
+  types, yielding a new type. The substitution $\SUBST{\type{\BOOL}/\scheme{\alpha}}{\fn{\fn{\scheme{\alpha}}{\scheme{\alpha}}}{\INT}}$ yields the type $\type{\fn{\fn{\BOOL}{\BOOL}}{\INT}}$.
+\item[Environment lookups] check that some name is mapped to some type scheme
+  in an environment. We typically use this when we expect something to have
+  been added to the environment further down the tree, such as when a function
+  or variable has been defined and we need to use its type. The assertion that
+  $\var{x}$ in our environment $\RHO$ has type scheme $\FORALL{\alpha}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}$ is written $\LOOKUP{\RHO}{\var{x}} = \FORALL{\alpha}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}$. This only occurs in the rules together with substitution, which is why rule \RULE{p3} can be called the \emph{specialization} rule -- it specializes a polymorphic type scheme from the environment to a useful concrete type.
+\item[Environment extensions] take an environment and add some mappings to it,
+  possibly replace ones that already exist. $\WITH{\RHO}{\var{x}\mapsto\INT}$
+  denotes \RHO\ extended with a mapping from $\var{x}$ to \INT.
+\item[Side conditions] are pieces of English text that capture a property that
+  would be to complex or take up too much space to define purely
+  mathematically. In the rules given here, only \RULE{p6} and \RULE{p8} have
+  side conditions that state that the type variables being quantified are not
+  free. The precise definition of this is somewhat subtle and beyond the scope
+  of this tutorial -- it is sufficient for you to know that you should pick
+  unique names for your type variables, and then you will never need to worry
+  about this condition.
+\end{description}
+
+\section{Monomorphic let-bindings}
+\label{sec:monom-let-bind}
+
+Returning to our examples, we will now see how \emph{monomorphic} functions
+and let-bound variables are typed. In other words, the examples in this
+section have only concrete types.
+
+\subsection{Variables}
+\label{sec:variables}
+
+
+We begin with a simple let-binding. We will show that
+$\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}$ can have type \INT\ in any
+environment.  We represent the ``in any environment'' part by simply placing
+some abstract environment variable $\RHO$ to the left of the
+turnstile. Because we never use the initial contents of $\RHO$, they can be
+anything.
+
+We want to show, therefore,
+$\typing{\RHO}{\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}}{\INT}$, using
+our typing rules. We begin as before, by creating a new tree with our goal at
+the bottom:
+\begin{displaymath}
+  \inference{?}{
+    \typing{\RHO}{\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}}{\INT}
+  }
+\end{displaymath}
+We have only one rule that applies: \RULE{p6}. We cannot use \RULE{p8} because
+it only applies when there are \emph{two} names following the \kwd{let}. The
+first premise of \RULE{p6} states that we need to type-check the expression
+being bound to $\var{n}$, and then extend our environment with the type we
+discover for $\var{n}$ and typecheck the body of the \kwd{let} with this
+extended environment. When we extend our environment, we also have the
+possibility to create a polymorphic type, but we will not use that possibility
+here. See Section \ref{sec:polym-let-bind} for examples of this. Our current
+state is now:
+\begin{displaymath}
+  \inference[\RULE{p6}]{
+    \typing{\RHO}{\NUM{17}}{\INT} &
+    \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\PLUS{\var{n}}{\NUM{1}}}{\INT}
+  }{
+    \typing{\RHO}{\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}}{\INT}
+  }
+\end{displaymath}
+
+The first premise, that $\NUM{17}$ can be an \INT, is easy to show using rule
+\RULE{p1}. In the second case, the only rule that has a $\PLUS{}{}$ in the
+conclusion is \RULE{p4}:
+\begin{displaymath}
+  \inference[\RULE{p6}]{
+    \inference[\RULE{p1}]{}{\typing{\RHO}{\NUM{17}}{\INT}} &
+    \inference[\RULE{p4}]{
+      \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\var{n}}{\INT} &
+      \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\NUM{1}}{\INT}
+    }{
+      \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\PLUS{\var{n}}{\NUM{1}}}{\INT}
+    }
+  }{
+    \typing{\RHO}{\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}}{\INT}
+  }
+\end{displaymath}
+
+The interesting case here is showing that $\var{n}$ can indeed have type
+\INT. To do this, we look up $\var{n}$ in our extended environment using rule
+\RULE{p3}. We can safely ignore the substitutions performed in \RULE{p3}'s
+conclusion, because we don't have any $\scheme{\forall}$-bound type variables
+to replace. Our final tree is then:
+\begin{displaymath}
+\resizebox{1.0\textwidth}{!}{
+  \inference[\RULE{p6}]{
+    \inference[\RULE{p1}]{}{\typing{\RHO}{\NUM{17}}{\INT}} &
+    \inference[\RULE{p4}]{
+      \inference[\RULE{p3}]{
+        \LOOKUP{\WITH{\RHO}{\var{n}\mapsto \INT}}{\var{n}} = \INT
+      }{
+        \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\var{n}}{\INT}
+      } &
+      \inference[\RULE{p1}]{
+      }{
+        \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\NUM{1}}{\INT}
+      }
+    }{
+      \typing{\WITH{\RHO}{\var{n}\mapsto \INT}}{\PLUS{\var{n}}{\NUM{1}}}{\INT}
+    }
+  }{
+    \typing{\RHO}{\LET{\var{n}}{\NUM{17}}{\PLUS{\var{n}}{\NUM{1}}}}{\INT}
+  }
+}
+\end{displaymath}
+
+\subsection{The Fibonacci function}
+\label{sec:fibonacci-function}
+
+The Fibonacci function can be defined as follows in our little dialect of ML:
+\begin{displaymath}
+  \LETF{
+    \var{fib}
+  }{
+    \var{n}
+  }{
+    \IF{
+      \LT{\var{n}}{\NUM{1}}
+    }{
+      \NUM{1}
+    }{
+      \PLUS{
+        \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+      }{
+        \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+      }
+    }
+  }{
+    \var{fib}
+  }
+\end{displaymath}
+By looking at the function, we can see that it should have type
+$\fn{\INT}{\INT}$ in any context. Thus, we will prove that
+\begin{displaymath}
+  \typing{
+    \RHO
+  }{
+    \LETF{
+      \var{fib}
+    }{
+      \var{n}
+    }{
+      \IF{
+        \LT{\var{n}}{\NUM{1}}
+      }{
+        \NUM{1}
+      }{
+        \PLUS{
+          \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+        }{
+          \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+        }
+      }
+    }{
+      \var{fib}
+    }
+  }{
+    \fn{\INT}{\INT}
+  }
+\end{displaymath}
+
+We are beginning to approach the maximum width that can be displayed on a
+printed page, so the derivation will be constructed in manageable pieces and
+presented whole at the end.  Because we are defining a function, we must use
+\RULE{p8}. This rule has two premises that we need to prove:
+\\\noindent
+\begin{displaymath}
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{t_x}, \var{fib} \mapsto \type{\fn{t_x}{t_r}}}
+  }{
+    \IF{
+      \LT{\var{n}}{\NUM{1}}
+    }{
+      \NUM{1}
+    }{
+      \PLUS{
+        \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+      }{
+        \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+      }
+    }
+  }{\type{t_r}}
+\end{displaymath}
+and
+\begin{displaymath}
+\typing{\WITH{\RHO}{\var{fib} \mapsto \fn{\type{t_x}}{\type{t_r}}}}{\var{fib}}{\fn{\INT}{\INT}}
+\end{displaymath}
+
+Proving them requires us to do two things: we must find appropriate types to
+fill in $\type{t_x}$ and $\type{t_r}$, and we must construct derivation trees
+that demonstrate that these values are indeed valid types. By looking at the
+above statements, it is straightforward to see that both $\type{t_x}$ and
+$\type{t_r}$ need to be \INT, because $\var{n}$ is compared to an integer and
+the result of the function is used in an addition. Thus, the second premise
+will be straightforward, requiring only a use of \RULE{p3} to look up
+\var{fib}'s type in the context.
+
+To construct the derivation for the first premise, we use \RULE{p7}, which now
+requires us to show the following:
+\begin{itemize}
+\item $
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+  }{
+    \LT{\var{n}}{\NUM{1}}
+  }{
+    \BOOL
+  }
+$
+\item $
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+  }{
+    \NUM{1}
+  }{
+    \INT
+  }
+$
+\item $
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+  }{
+    \PLUS{
+      \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+    }{
+      \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+    }
+  }{
+    \INT
+  }
+$
+\end{itemize}
+
+We proceed with the derivations for these typings.  In the interests of saving
+space, repeated copies of the same environment extensions have been replaced
+by ``$\cdots$'' when they were not directly relevant to the derivation and
+could be seen elsewhere.  The first derivation checks that both arguments to
+the \LT{}{} are integers, looking up \var{n} in the environment:
+\begin{displaymath}
+\resizebox{1.0\textwidth}{!}{
+  \inference[\RULE{p5}]{
+    \inference[\RULE{p3}]{
+      \LOOKUP{
+        \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+      }{
+        \var{n}
+      } = \INT
+    }{
+      \typing{
+        \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+      }{
+        \var{n}
+      }{
+        \INT
+      }
+    } &
+    \inference[\RULE{p1}]{}{
+      \typing{
+        \WITH{\RHO}{\cdots}
+      }{
+        \NUM{1}
+      }{
+        \INT
+      }
+     }
+  }{
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+  }{
+    \LT{\var{n}}{\NUM{1}}
+  }{
+    \BOOL
+  }
+}
+}
+\end{displaymath}
+
+The base case for the recursion is straightforward to check. We use \RULE{p1},
+because it is an integer constant.
+\begin{displaymath}
+  \inference[\RULE{p1}]{
+  }{
+  \typing{
+    \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+  }{
+    \NUM{1}
+  }{
+    \INT
+  }
+  }
+\end{displaymath}
+
+To check our recursive call, we need to check that both arguments to \PLUS{}{}
+can have type $\INT$ in order to use \RULE{p4}. Here, we see only the first
+one, as the second can be constructed by replacing all instances of \NUM{-1}
+with \NUM{-2}.
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p9}]{
+    \inference[\RULE{p3}]{
+      \LOOKUP{\WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}}{\var{fib}} = \fn{\INT}{\INT}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+      }{
+        \var{fib}
+      }{
+        \fn{\INT}{\INT}
+      }
+    } &
+    \inference[\RULE{p4}]{
+      \vdots \qquad\qquad &\qquad\qquad \vdots
+    }{
+      \typing{\WITH{\RHO}{\var{n} \mapsto \type{\INT},\cdots}}{\PLUS{\var{n}}{\NUM{-1}}}{\INT}
+    }
+  }{
+    \typing{
+      \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+    }{
+      \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+    }{
+      \INT
+    }
+  }
+}
+\end{displaymath}
+
+The full derivation can be seen in Figure \ref{fig:fib}.
+
+\begin{sidewaysfigure}
+  \begin{align*}
+    \text{Condition:} \quad &\inference[\RULE{p5}]{
+          \inference[\RULE{p3}]{
+            \LOOKUP{
+              \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+            }{
+              \var{n}
+            } = \INT
+          }{
+            \typing{
+              \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+            }{
+              \var{n}
+            }{
+              \INT
+            }
+          } &
+          \inference[\RULE{p1}]{}{
+            \typing{
+              \WITH{\RHO}{\cdots}
+            }{
+              \NUM{1}
+            }{
+              \INT
+            }
+          }
+        }{
+          \typing{
+            \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+          }{
+            \LT{\var{n}}{\NUM{1}}
+          }{
+            \BOOL
+          }
+        }\\\\
+    \text{Recursive:} \quad &\inference[\RULE{p9}]{
+      \inference[\RULE{p3}]{
+        \LOOKUP{\WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}}{\var{fib}} = \fn{\INT}{\INT}
+      }{
+        \typing{
+          \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+        }{
+          \var{fib}
+        }{
+          \fn{\INT}{\INT}
+        }
+      } & \inference[\RULE{p4}]{
+        \inference[\RULE{p3}]{
+          \LOOKUP{\WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}}{\var{n}} = \INT
+        }{
+          \typing{
+            \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+          }{
+            \var{n}
+          }{
+            \INT
+          }
+        }
+        &
+        \inference[\RULE{p1}]{}{
+          \typing{
+            \WITH{\RHO}{\cdots}
+          }{
+            \NUM{-1}
+          }{
+            \INT
+          }
+        }
+      }{
+        \typing{
+          \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+        }{
+          \PLUS{\var{n}}{\NUM{-1}}
+        }{
+          \INT
+        }
+      }
+    }{
+      \typing{
+        \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+      }{
+        \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+      }{
+        \INT
+      }
+    }\\\\
+    \text{Body derivation:} \quad& \inference[\RULE{p7}] {
+      \text{(Condition)}
+         &
+        \inference[\RULE{p1}]{}{
+          \typing{\WITH{\RHO}{\cdots}}{\NUM{1}}{\INT}
+        } &
+        \inference[\RULE{p4}]{
+          \text{(Recursive)}\quad & \quad\text{(Recursive with \NUM{-2})}
+        }{
+          \typing{
+            \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+          }{
+            \PLUS{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+            }{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+            }
+          }{
+            \INT
+          }}
+       }{
+        \typing{
+          \WITH{\RHO}{\var{n} \mapsto \type{\INT}, \var{fib} \mapsto \type{\fn{\INT}{\INT}}}
+        }{
+          \IF{
+            \LT{\var{n}}{\NUM{1}}
+          }{
+            \NUM{1}
+          }{
+            \PLUS{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+            }{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+            }
+          }
+        }{\type{\INT}}
+      }
+  \end{align*}
+  \vspace{1cm}
+  \begin{displaymath}
+    \inference[\RULE{p8}]{
+      \text{(Body derivation)}
+       &
+      \inference[]{}{
+        \typing{\WITH{\RHO}{\var{fib} \mapsto \fn{\type{\INT}}{\type{\INT}}}}{\var{fib}}{\fn{\INT}{\INT}}
+      }
+    }{
+      \typing{
+        \RHO
+      }{
+        \LETF{
+          \var{fib}
+        }{
+          \var{n}
+        }{
+          \IF{
+            \LT{\var{n}}{\NUM{1}}
+          }{
+            \NUM{1}
+          }{
+            \PLUS{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-1}})}
+            }{
+              \app{\var{fib}}{(\PLUS{\var{n}}{\NUM{-2}})}
+            }
+          }
+        }{
+          \var{fib}
+        }
+      }{
+        \fn{\INT}{\INT}
+      }
+    }
+  \end{displaymath}
+  \caption{The full typing derivation for the Fibonacci function. Sub-derivations are named and written separately.\label{fig:fib}}
+\end{sidewaysfigure}
+
+\section{Polymorphic let-bindings}
+\label{sec:polym-let-bind}
+
+In the preceding examples, we have defined variables and functions through
+\kwd{let}-bindings.  In these examples, we've added new names to contexts and
+we've looked them up. However, we have not yet defined any polymorphic values
+or functions, so the substitution step in the lookup has been trivial. In this
+section, we'll explore how polymorphic functions are defined and how their
+type derivations are constructed. In doing so, we'll actually use the
+substitution feature.
+
+\subsection{The identity function}
+\label{sec:identity-function}
+
+The identity function, written $\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}$,
+can have any number of different types.  Let's begin by showing that it can
+have the type $\fn{\INT}{\INT}$ in any environment. We begin by using an
+unspecified environment \RHO, our function, and our desired type:
+\begin{displaymath}
+  \inference[]{
+    ?
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}}{\fn{\INT}{\INT}}
+  }
+\end{displaymath}
+Applying \RULE{p8}, we get two new premises.  The body of our function, in
+this case \var{x}, must be typable as some result type $\type{t_r}$, given
+that $\var{id}$ can be a function from $\var{x}$'s type to that result
+type. Additionally, if we then attach a type scheme quantifier over some type
+variables, we then need to show that the body has the correct type for the
+whole let (in this case \type{\fn{\INT}{\INT}}). Our tree is as follows:
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p8}]{
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\type{\fn{t_x}{t_r}},
+          \var{x}\mapsto\type{t_x}}
+      }{
+        \var{x}
+      }{
+        \type{t_r}
+      }
+    } &
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\ALPHAS}{\fn{\type{t_x}}{\type{t_r}}}}
+      }{
+        \var{id}
+      }{
+        \fn{\INT}{\INT}
+      }
+    }
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}}{\fn{\INT}{\INT}}
+  }
+}
+\end{displaymath}
+To complete the derivation, we must figure out how to fill out $\type{t_x}$,
+$\type{t_r}$, and $\scheme{\ALPHAS}$ such that we can use \RULE{p3} for both
+cases.
+
+The first observation to be made is that $\type{t_x}$ has to be the same as
+$\type{t_r}$. This is because \var{id} returns its argument unchanged. The
+other observation is that we have no other restrictions on them, because no
+operations are applied to \var{x} in \var{id}'s definition. We are free to
+choose \emph{any} type here.  Thus, we can pick a type variable
+$\type{\alpha}$. We now have:
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p8}]{
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\type{\fn{\alpha}{\alpha}},
+          \var{x}\mapsto\type{\alpha}}
+      }{
+        \var{x}
+      }{
+        \type{\alpha}
+      }
+    } &
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\ALPHAS}{\fn{\type{\alpha}}{\type{\alpha}}}}
+      }{
+        \var{id}
+      }{
+        \fn{\INT}{\INT}
+      }
+    }
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}}{\fn{\INT}{\INT}}
+  }
+}
+\end{displaymath}
+
+Secondly, we can replace the $\scheme{\ALPHAS}$ with the single variable
+$\scheme{\alpha}$, as it is the only type variable in the right-hand part of
+the type scheme. Because the variable $\type{\alpha}$ is now bound by the
+scheme, I change its color to green.
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p8}]{
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\type{\fn{\alpha}{\alpha}},
+          \var{x}\mapsto\type{\alpha}}
+      }{
+        \var{x}
+      }{
+        \type{\alpha}
+      }
+    } &
+    \inference[]{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{
+        \var{id}
+      }{
+        \fn{\INT}{\INT}
+      }
+    }
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}}{\fn{\INT}{\INT}}
+  }
+}
+\end{displaymath}
+We're almost done.  What's left is to use \RULE{p3} to look up our \var{x} and
+\var{id} in the environments.  Here, it's important to look at the structure
+of \RULE{p3} carefully: the \scheme{\ALPHAS} being substituted on the bottom
+are the $\scheme{\alpha}$s between the \scheme{\forall} and the dot, not just any
+arbitrary variables in the type. In this tutorial, the variables that can be
+substituted are always green.
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p8}]{
+    \inference[\RULE{p3}]{
+        \LOOKUP{
+          \WITH{\RHO}{\var{id}\mapsto\type{\fn{\alpha}{\alpha}}, \var{x}\mapsto\type{\alpha}}
+        }{\var{x}} = \type{\alpha}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\type{\fn{\alpha}{\alpha}}, \var{x}\mapsto\type{\alpha}}
+      }{
+        \var{x}
+      }{
+        \type{\alpha}
+      }
+    } &
+    \inference[]{
+      \LOOKUP{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{\var{id}} = \FORALL{\alpha}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{
+        \var{id}
+      }{
+        \fn{\INT}{\INT}
+      }
+    }
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\var{id}}}{\fn{\INT}{\INT}}
+  }
+}
+\end{displaymath}
+The leftmost lookup performs no substitutions. The rightmost is justified
+because the $[\INT/\scheme{\alpha}]\fn{\scheme{\alpha}}{\scheme{\alpha}}$ from
+the bottom of \RULE{p3} is equivalent to $\fn{\INT}{\INT}$.
+
+\subsection{Applying \var{id} to itself}
+\label{sec:apply-varid-itself}
+
+In the previous example, we used polymorphism to allow \var{id} to be used
+with integers.  The same argument could have been used for any type - we would
+simply replace both \INT s with the new type in our derivation. However,
+polymorphism gives us more power than this.  The same function can be used
+with \emph{different} types in the same expression. For an example of this, we
+will apply the identity function to itself, producing an identity function on
+\BOOL s.
+
+Formally speaking, we will show that:
+\begin{displaymath}
+  \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\app{\var{id}}{\var{id}}}}{\fn{\BOOL}{\BOOL}}
+\end{displaymath}
+
+As usual, we place our goal at the bottom of a new tree.  The outermost layer
+is a function let, so we use \RULE{p8}.  The first premise is solved just as
+in the last example, using \RULE{p3}.
+\begin{displaymath}
+\resizebox{1.10\textwidth}{!}{
+  \inference[\RULE{p8}]{
+    \inference[\RULE{p3}]{
+      \LOOKUP{
+        \WITH{\RHO}{\var{id}\mapsto \fn{\type{\alpha}}{\type{\alpha}}, \var{x} \mapsto \type{\alpha}}
+      }{\var{x}}
+      = \type{\alpha}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto \fn{\type{\alpha}}{\type{\alpha}}, \var{x} \mapsto \type{\alpha}}
+      }{
+        \var{x}
+      }{
+        \type{\alpha}
+      }
+    }
+    &
+    \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{
+        \app{\var{id}}{\var{id}}
+      }{
+        \fn{\BOOL}{\BOOL}
+      }
+    }
+  }{
+    \typing{\RHO}{\LETF{\var{id}}{\var{x}}{\var{x}}{\app{\var{id}}{\var{id}}}}{\fn{\BOOL}{\BOOL}}
+  }
+}
+\end{displaymath}
+
+Let's focus on the second premise of \RULE{p8} to save space:
+\begin{displaymath}
+      \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{
+        \app{\var{id}}{\var{id}}
+      }{
+        \fn{\BOOL}{\BOOL}
+      }
+    }
+\end{displaymath}
+Because it is a function call, we use \RULE{p9}:
+\begin{displaymath}
+  \inference[\RULE{p9}]{
+    \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\fn{\type{t_x}}{\type{t_r}}}
+    }
+    &
+    \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\type{t_x}}
+    }
+  }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{
+        \app{\var{id}}{\var{id}}
+      }{
+        \fn{\BOOL}{\BOOL}
+      }
+    }
+\end{displaymath}
+We need to demonstrate two different types for \var{id}! This is because one
+instance if \var{id} is the one that we will later use on our Booleans, while
+the other is actually being used on the \fn{\BOOL}{\BOOL} function
+\var{id}. Therefore, both $\type{t_x}$ and $\type{t_r}$ need to be
+$\fn{\BOOL}{\BOOL}$. Splitting the premises in the interest of space, we get:
+\begin{displaymath}
+    \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\fn{\type{(\fn{\BOOL}{\BOOL})}}{\type{(\fn{\BOOL}{\BOOL})}}}
+    }
+\end{displaymath} and
+\begin{displaymath}
+    \inference{?}{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\type{\fn{\BOOL}{\BOOL}}}
+    }
+\end{displaymath}
+
+The second premise is straightforward. We simply apply \RULE{p3}, substituting
+\BOOL\ for $\scheme{\alpha}$:
+\begin{displaymath}
+    \inference[\RULE{p3}]{
+      \LOOKUP{\WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}}{\var{id}} = \FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\type{\fn{\BOOL}{\BOOL}}}
+    }
+\end{displaymath}
+This is acceptable because $\fn{\BOOL}{\BOOL} = [\BOOL / \scheme{\alpha}]\fn{\scheme{\alpha}}{\scheme{\alpha}}$.
+
+Proving first premise is almost the same -- the only difference is our choice
+of substitution for $\scheme{\alpha}$. Here, we perform the substitution $[\fn{\BOOL}{\BOOL} / \scheme{\alpha}]\fn{\scheme{\alpha}}{\scheme{\alpha}}$.
+\begin{displaymath}
+    \inference[\RULE{p3}]{
+      \LOOKUP{\WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}}{\var{id}} = \FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}
+    }{
+      \typing{
+        \WITH{\RHO}{\var{id}\mapsto\FORALL{\scheme{\alpha}}{\fn{\scheme{\alpha}}{\scheme{\alpha}}}}
+      }{ \var{id} }{\type{\fn{(\fn{\BOOL}{\BOOL})}{(\fn{\BOOL}{\BOOL})}}}
+    }
+\end{displaymath}
+
+By instantiating our type schemes differently, we can get a variety of types for the same term.
+\appendix
+\section{Formal rules}
+\label{sec:formal-rules}
+
+\subsection*{Types}
+\grammar{\type{t}}{Types}
+\prod{\INT}{Integers}\\
+\prod{\BOOL}{Booleans}\\
+\prod{\type{\fn{t}{t}}}{Functions}\\
+\prod{\type{\alpha}\mid\type{\beta}\mid\type{\gamma}\mid\type{\delta}\mid\ldots}{Type variables}\\
+\endgrammar
+
+\subsection*{Type schemes}
+\grammar{\scheme{\sigma}}{Typing schemes}
+\prod{\type{t}}{Simple type with no parameters}\\
+\prod{\FORALL{\ALPHAS}{\type{t}}}{\type{t} with \scheme{\ALPHAS} as parameters}
+\endgrammar
+
+\subsection*{Expressions}
+\grammar{\expr{e}}{Expressions}
+\prod{\expr{x} \mid \expr{y}\mid\expr{z}\mid\expr{f}}{Variables}\\
+\prod{\textcolor{term}{i}}{Integer literals}\\
+\prod{\PLUS{\expr{e}}{\expr{e}}}{Addition}\\
+\prod{\LT{\expr{e}}{\expr{e}}}{Less than}\\
+\prod{\TRUE}{True}\\
+\prod{\FALSE}{False}\\
+\prod{\app{\expr{e}}{\expr{e}}}{Function application}\\
+\prod{\IF{\expr{e}}{\expr{e}}{\expr{e}}}{Conditional expression}\\
+\prod{\LET{\expr{x}}{\expr{e}}{\expr{e}}}{Variable binding}\\
+\prod{\LETF{\expr{x}}{\expr{x}}{\expr{e}}{\expr{e}}}{Variable binding}\\
+\endgrammar
+
+\subsection*{Contexts}
+\grammar{\RHO}{Typing contexts}
+\prod{\EMPTY}{The empty context}\\
+\prod{\WITH{\RHO}{\expr{x_1} \mapsto \scheme{\sigma_1}, \ldots, \expr{x_n} \mapsto \scheme{\sigma_n}}}{\RHO\ extended with new name/scheme pairs}
+\endgrammar
+
+The symbol $\mapsto$ is pronounced ``maps to''.
+
+\subsection*{Typing Rules}
+These typing rules are taken from \citet[p. 98]{Sestoft2012}, and have been
+slightly reformatted to fit the page and match the color scheme of the
+tutorial.
+
+\begin{displaymath}
+  \inference[\RULE{p1}]{}{
+    \typing{\RHO}{\textcolor{term}{i}}{\INT}
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p2}]{}{
+    \typing{\RHO}{\textcolor{term}{b}}{\BOOL}
+  }
+\end{displaymath}
+
+% \begin{displaymath}
+%   \inference[\RULE{p2a}]{}{
+%     \typing{\RHO}{\TRUE}{\BOOL}
+%   }
+% \end{displaymath}
+
+% \begin{displaymath}
+%   \inference[\RULE{p2b}]{}{
+%     \typing{\RHO}{\FALSE}{\BOOL}
+%   }
+% \end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p3}]{
+    \LOOKUP{\RHO}{\var{f}} = \FORALL{\alpha_1}{\type{t}}
+  }{
+    \typing{\RHO}{\var{f}}{
+      [\type{t_1}/\scheme{\alpha_1}, \ldots, \type{t_n}/\scheme{\alpha_n}]\type{t}
+    }
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p4}]{
+    \typing{\RHO}{\expr{e_1}}{\INT} &
+    \typing{\RHO}{\expr{e_2}}{\INT}
+  }{
+    \typing{\RHO}{\PLUS{\expr{e_1}}{\expr{e_2}}}{\INT}
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p5}]{
+    \typing{\RHO}{\expr{e_1}}{\INT} &
+    \typing{\RHO}{\expr{e_2}}{\INT}
+  }{
+    \typing{\RHO}{\LT{\expr{e_1}}{\expr{e_2}}}{\BOOL}
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p6}]{
+    \typing{\RHO}{\expr{e_r}}{\type{t_r}} &
+    \typing{
+      \WITH{\RHO}{\black{x} \mapsto \FORALL{\ALPHAS}{\type{t_r}}}
+    }{
+      \expr{e_b}
+    }{
+      \type{t}
+    } \\
+    \text{$\scheme{\ALPHAS}$ not free in $\RHO$}
+  }{
+    \typing{\RHO}{\LET{x}{\expr{e_r}}{\expr{e_b}}}{\type{t}}
+  }
+\end{displaymath}
+
+
+\begin{displaymath}
+  \inference[\RULE{p7}]{
+    \typing{\RHO}{\expr{e_1}}{\BOOL} &
+    \typing{\RHO}{\expr{e_2}}{\type{t}} &
+    \typing{\RHO}{\expr{e_3}}{\type{t}}
+  }{
+    \typing{\RHO}{\IF{\expr{e_1}}{\expr{e_2}}{\expr{e_3}}}{\type{t}}
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p8}]{
+    \typing{
+      \WITH{\RHO}{\expr{x} \mapsto \type{t_x}, \expr{f}\mapsto \type{\fn{t_x}{t_r}}}
+    }{
+      \expr{e_r}
+    }{
+      \type{t_r}
+    } &
+    \typing{
+      \WITH{\RHO}{\expr{f}\mapsto\FORALL{\ALPHAS}{\type{\fn{t_x}{t_r}}}}
+    }{
+      \expr{e_b}
+    }{
+      \type{t}
+    }\\
+    \text{$\scheme{\ALPHAS}$ not free in $\RHO$}
+  }{
+    \typing{\RHO}{\LETF{\expr{f}}{\expr{x}}{\expr{e_r}}{\expr{e_b}}}{\type{t}}
+  }
+\end{displaymath}
+
+\begin{displaymath}
+  \inference[\RULE{p9}]{
+    \typing{\RHO}{\expr{e_1}}{\type{\fn{t_x}{t_r}}} &
+    \typing{\RHO}{\expr{e_2}}{\type{t_x}}
+  }{
+    \typing{\RHO}{\expr{\app{e_1}{e_2}}}{\type{t_r}}
+  }
+\end{displaymath}
+
+\section*{Acknowledgments}
+I would like to thank Hannes Mehnert and Peter Sestoft for comments on drafts
+of this tutorial as well as David Georg Korczynski for catching an error.
+
+\bibliographystyle{plainnat}
+\bibliography{type-rule-tutorial}
+\end{document}
