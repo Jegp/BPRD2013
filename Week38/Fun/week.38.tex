@@ -120,9 +120,8 @@ though we will not need it to use the function returned by the expression.
 Whatever is bound to x, the right-hand side of line 1 will always be valid, so
 for $f$ to be non-polymorphic would be unnecessarily restrictive.
 Also, $(f : \alpha \mapsto \ int)$.
-lars\\
+\\
 
-\hrule
-$\rho \vdash let f = er in eb end :t$
-$\PLUS{NUM{17}}{\NUM{25}}$
+$\dfrac{\rho \vdash f : t_x \rightarrow int \quad x : t_x}{\rho \vdash let\ f\ x = 1\ in\ f\ f\ end : t}$
+
 \end{document}
