@@ -73,14 +73,16 @@
 \newcommand{\LOOKUP}[2]{#1\left(#2\right)}
 
 
-\title{A Tutorial on Polymorphic Type Derivations}
-\author{David Christiansen}
-\date{DRAFT of December 27, 2012}
 \begin{document}
 
 \title{Week 38}
 \author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
 \maketitle
+\section*{Foreword (sort of)}
+Hi TA's. We got a bit behind, so this is our "blank hand in" with more to come. If don't mind "feedbacking" it, that would be great, if you would rather wait for the entire hand-in, that would be understandable as well.
+
+Cheers.
+
 \section*{Exercise 6.1 (PLC)}
 \subsection*{Is the result of the third one as expected?}
 \begin{verbatim}
@@ -119,10 +121,13 @@ though we will not need it to use the function returned by the expression.
 \end{verbatim}
 Whatever is bound to x, the right-hand side of line 1 will always be valid, so
 for $f$ to be non-polymorphic would be unnecessarily restrictive.
-Also, $(f : \alpha \mapsto \ int)$.
-lars\\
-
-\hrule
-$\rho \vdash let f = er in eb end :t$
-$\PLUS{NUM{17}}{\NUM{25}}$
+Also, $(f : \alpha \mapsto int)$.
+%\begin{displaymath}
+%\inference[\RULE{p1}]{
+%	\typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}}{\BOOL}
+%	\typing{\EMPTY}{\LT{\NUM{2}}{\NUM{3}}}}{\BOOL}
+%}
+%\end{displaymath}
+%$\rho \vdash let f = er in eb end :t$
+%$\PLUS{NUM{17}}{\NUM{25}}$
 \end{document}
