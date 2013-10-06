@@ -1,0 +1,51 @@
+\documentclass[a4paper]{article}
+
+\usepackage{graphicx} % Required to insert images
+\usepackage{natbib}
+\usepackage{rotating}
+
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\section*{7.1}
+\begin{verbatim}
+ 1 > fromFile "ex1.c";;
+ 2 val it : Absyn.program =
+ 3   Prog
+ 4     [Fundec
+ 5        (null,"main",[(TypI, "n")],
+ 6         Block
+ 7           [Stmt
+ 8              (While
+ 9                 (Prim2 (">",Access (AccVar "n"),CstI 0),
+10                  Block
+11                    [Stmt (Expr (Prim1 ("printi",Access (AccVar "n"))));
+12                     Stmt
+13                       (Expr
+14                          (Assign
+15                             (AccVar "n",Prim2 ("-",Access (AccVar "n"),CstI 1))))]));
+16            Stmt (Expr (Prim1 ("printc",CstI 10)))])]
+\end{verbatim}
+
+\quad
+
+\begin{tabular}{l l}
+  \textbf{Declerations} & \texttt{Fundec} declares the \texttt{main} function with no return-type, name "main" and \\
+                        & the integer (\texttt{TypI}) \texttt{i} as the only parameter. \\
+  \textbf{Statements} & The first statement is the while-statement in line 7 which also contains \\
+                      & two statements: One that prints the variable \texttt{n} (in line 11) and one that \\
+                      & decrements the variable \texttt{n}. Lastly in line 16 a statement which prints the \\
+                      & ASCII character for a line break. \\
+  \textbf{Types} & Types \texttt{TypI} for the paramenter of the \texttt{main} method (line 5). \\
+  \textbf{Expressions} & In line 11 we call the method \texttt{printi} using the variable \texttt{n}. In line 13 we \\
+                       & assign a new value to the variable \texttt{n}. Line 16 contains an expression where the \\
+                       & method \texttt{printc} is called using the constnat $10$.
+\end{tabular}
+
+\section*{7.2}
+
+
+\end{document}
