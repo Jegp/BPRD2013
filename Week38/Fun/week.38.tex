@@ -2,14 +2,13 @@
 
 \usepackage{graphicx} % Required to insert images
 \usepackage{natbib}
-\usepackage{graphicx}
 \usepackage{rotating}
 
 \usepackage{amsmath}
 \usepackage{tabularx}
 \usepackage[utf8]{inputenc}
 
-%\usepackage[ligature,inference,reserved,shorthand]{semantic}
+\usepackage[ligature,inference,reserved,shorthand]{semantic}
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -113,15 +112,39 @@ The environment also contains the closure that defines the $add\ x$ function,
 though we will not need it to use the function returned by the expression.
 
 \section*{Exercise 6.4 (PLC)}
+\subsection*{(i)}
 \begin{verbatim}
 1 let f x = 1
-2 in f f end
+2     in f f end
 \end{verbatim}
-Whatever is bound to x, the right-hand side of line 1 will always be valid, so
-for $f$ to be non-polymorphic would be unnecessarily restrictive.
-Also, $(f : \alpha \mapsto \ int)$.
+Since we define $f\ f$ to be of type $t_x \to int$ and we define $f$ to be of type $t_x$ (since it is the argument to $f$), we have to define the argument for $f$ as a polymorphic type or risk infinity.
 \\
 
-$\dfrac{\rho \vdash f : t_x \rightarrow int \quad x : t_x}{\rho \vdash let\ f\ x = 1\ in\ f\ f\ end : t}$
+\begin{displaymath}
+  \scalebox{0.6}{
+    \inference[\RULE{p8}]{
+      \rho[x \mapsto t_x, f \mapsto t_x \to int] \vdash 1 : int &
+      \inference[\RULE{p9}]{
+        \inference[\RULE{p3}]{
+          \rho (f) = \forall \alpha_1 ... \alpha_n.t_x
+        }{
+          \rho [f \mapsto \forall \alpha_1 ... \alpha_n.t_x \to int] \vdash f : t_x \to int
+        } &
+        \rho \mapsto f : t_x
+      }{
+        \rho[f \mapsto \forall \alpha_1 ... \alpha_n.t_x \to int] \vdash ff : t 
+      } &
+      \quad \alpha_1 ... \alpha_n not\ free\ in\ \rho
+    }{
+      \rho \vdash let\ f\ x = 1\ in\ f\ f\ end : t
+    }
+  }
+\end{displaymath}
+
+\subsection*{(ii)}
+\begin{verbatim}
+1 let f x = if x < 10 then 42 else f(x+1)
+2     in f 20 end
+\end{verbatim}
 
 \end{document}
