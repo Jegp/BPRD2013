@@ -120,7 +120,7 @@ though we will not need it to use the function returned by the expression.
 Since we define $f\ f$ to be of type $t_x \to int$ and we define $f$ to be of type $t_x$ (since it is the argument to $f$), we have to define the argument for $f$ as a polymorphic type or risk infinity.
 \\
 
-\begin{displaymath}
+$$
   \scalebox{0.6}{
     \inference[\RULE{p8}]{
       \rho[x \mapsto t_x, f \mapsto t_x \to int] \vdash 1 : int &
@@ -139,12 +139,52 @@ Since we define $f\ f$ to be of type $t_x \to int$ and we define $f$ to be of ty
       \rho \vdash let\ f\ x = 1\ in\ f\ f\ end : t
     }
   }
-\end{displaymath}
+$$
 
 \subsection*{(ii)}
 \begin{verbatim}
 1 let f x = if x < 10 then 42 else f(x+1)
 2     in f 20 end
 \end{verbatim}
+
+One might think that the expression should be polymorphic since the right hand side of the if-expression never terminates. However the rule 7 proves that the right hand side has the same type as the left hand side of the if-then-else. Hence the if-expression has type int. 
+
+$$
+\scalebox{0.7}{
+  \rotatebox{90}{
+  \inference[\RULE{p8}]{
+    \inference[\RULE{p7}]{
+      \inference[\RULE{p5}]{
+        \rho \mapsto x : int &
+        \inference[\RULE{p1}]{}{\rho \mapsto 10 : int}
+      }{
+        \rho [x \mapsto t_x, f \mapsto t_x \to t_r] \vdash x < 10 : bool
+      } &
+      \rho\ 42 : int &
+      \inference[\RULE{p9}]{
+        \rho \vdash x + 1 : int
+      }{
+        \rho \vdash f(x + 1) : int
+      }
+    }{
+      \rho [x \mapsto t_x, f \mapsto t_x \to t_r] \vdash if\ x\ <\ 10\ then\ 42\ else\ f(x+1) : int
+    } &
+    \inference[\RULE{p9}]{
+      \inference[\RULE{p3}]{
+        \rho(f) = \forall \alpha_1 ... \alpha_n.int
+      }{
+        \rho [x \mapsto \forall \alpha_1 ... \alpha_n] \vdash f : int \to int
+      } &
+      \inference[\RULE{p1}]{}{\rho \vdash 20 : int}
+    }{
+      \rho [x \mapsto \forall \alpha_1 ... \alpha_n] \vdash f\ 20\ end : int
+    } &
+    \alpha_1 ... \alpha_n\ not\ free\ in\ \rho
+  }{
+    \rho \vdash let\ f\ x = if\ x <\ 10\ then\ 42\ else\ f(x+1)\ in\ f\ 20\ end : int
+  }
+}
+}
+$$
 
 \end{document}
