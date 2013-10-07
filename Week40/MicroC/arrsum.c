@@ -34,28 +34,25 @@ void main(int n) {
 
 //ex. 7.2 i
 void arrsum(int n, int arr[], int *sump){
-	int i; i=0;
-	while(i<n){
+	int i;
+	for(i=0;i<n;i=i+1){
 		*sump = *sump + arr[i];
-		i=i+1;
 	}
 }
 
 //ex. 7.2 ii
 void nsquares(int n, int arr[]){
-	int i; i=0;
-	while (i<n){
+	int i;
+	for (i=0; i<n; i=i+1){
 		arr[i]=i*i;
-		i=i+1;
 	}
 }
 
 //ex. 7.2 iii
 void histogram(int n, int ns[], int max, int freq[]){
-	int i; i=0;
-	while (i<n){
+	int i;
+	for(i=0;i<n;i=i+1){
 		freq[ns[i]] = freq[ns[i]]+1;
-		i=i+1;
 	}
 }
 
