@@ -2,8 +2,8 @@
 
 void main(int n) {
   while (n > 0) {
-    print n;
-    n--;
+    print --n;
+    --n;
   }
   println;
 }
