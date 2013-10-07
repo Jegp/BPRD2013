@@ -150,7 +150,9 @@ Access:
   | LPAR Access RPAR                    { $2                  }  
   | TIMES Access                        { AccDeref (Access $2)}
   | TIMES AtExprNotAccess               { AccDeref $2         }
-  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    }   
+  | MINUSMINUS Access                   { PreDec $2           }
+  | PLUSPLUS Access                     { PreInc $2           }
+  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    }
 ;
 
 Exprs:
