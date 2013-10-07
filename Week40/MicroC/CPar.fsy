@@ -100,7 +100,7 @@ StmtM:  /* No unbalanced if-else */
   | Block                               { $1                   }
   | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }
   | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }
-  | FOR LPAR Expr Expr Expr RPAR StmtM  { Block [ $3 ; (While($4, Block [ $7 : $5 ] )) ]}
+  | FOR LPAR Expr SEMI Expr SEMI Expr RPAR StmtM  { Block [ $3 ; (While($4, Block [ $7 : $5 ] )) ]}
 ;
 
 StmtU:
