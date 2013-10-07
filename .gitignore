@@ -13,6 +13,7 @@
 *.out
 *.zip
 *.dll
+*.fsi
 Week36/Expr/ExprLex.fs
 Week36/Expr/ExprPar.fs
 Week36/Expr/ExprPar.fsi
