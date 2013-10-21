@@ -1,0 +1,125 @@
+\documentclass[a4paper, titlepage]{article}
+
+\usepackage{graphicx} % Required to insert images
+\usepackage{natbib}
+\usepackage{listings}
+
+\usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\title{Week 41}
+\author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
+\maketitle
+\section*{8.1}
+\subsection*{ex3.c}
+\begin{lstlisting}[numbers=left]
+            LDARGS
+            CALL (1,"L1")         //call main
+            STOP                  //halt after main returns
+
+Label "L1"  INCSP 1               //int i
+            GETBP                 //i=0
+            CSTI 1
+            ADD
+            CSTI 0
+            STI
+            INCSP -1              //i=0 done, and stack 'cleaned'
+            GOTO "L3"
+
+Label "L2"  GETBP
+            CSTI 1
+            ADD
+            LDI
+            PRINTI                //print i;
+            INCSP -1
+            GETBP
+            CSTI 1
+            ADD
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            CSTI 1
+            ADD                   //i+1
+            STI                   //i=i+1
+            INCSP -1
+            INCSP 0
+
+Label "L3"  GETBP
+            CSTI 1
+            ADD
+            LDI                   //i
+            GETBP
+            CSTI 0
+            ADD
+            LDI                   //n
+            LT                    //i<n
+	    IFNZRO "L2"           //i<n done (jump if..)
+            INCSP -1
+            RET 0                 //void-return from main
+\end{lstlisting}
+
+\subsection*{ex.5.c}
+\begin{lstlisting}[numbers=left]
+            LDARGS
+            CALL (1,"L1")         //call main
+            STOP                  //halt after main returns here
+
+Label "L1"  INCSP 1               //int r
+            GETBP                 //r = n starts
+            CSTI 1
+            ADD
+            GETBP
+            CSTI 0
+            ADD
+            LDI
+            STI                   //r = n done
+            INCSP -1
+            INCSP 1               //int r inside block
+            GETBP
+            CSTI 0
+            ADD
+            LDI                   //n
+            GETBP
+            CSTI 2                //&r
+            ADD
+            CALL (2,"L2")         //square(n, &r)
+            INCSP -1
+            GETBP
+            CSTI 2
+            ADD
+            LDI                   //r
+            PRINTI                //print r - i.e. the square of n
+            INCSP -1
+            INCSP -1
+            GETBP
+            CSTI 1
+            ADD
+            LDI                   //r outside block
+            PRINTI                //print r - i.e. n
+            INCSP -1
+            INCSP -1
+            RET 0                 //void-return from main
+
+Label "L2"  GETBP
+            CSTI 1
+            ADD
+	    LDI                   //*rp (as a reference)
+            GETBP
+            CSTI 0
+            ADD
+            LDI                   //i
+            GETBP
+            CSTI 0
+            ADD
+            LDI                   //i
+            MUL                   //i * i
+            STI                   //*rp = i * i
+            INCSP -1
+            INCSP 0
+            RET 1                 //void-return from square
+\end{lstlisting}
+\end{document}
