@@ -60,6 +60,8 @@ class Machine {
     int bp = -999;	// Base pointer, for local variable access 
     int sp = -1;	// Stack top pointer
     int pc = 0;		// Program counter: next instruction
+    if (trace)
+      System.out.println("[stack] {pc: instr param}");
     for (;;) {
       if (trace) 
         printsppc(s, bp, sp, p, pc);
