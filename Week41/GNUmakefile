@@ -1,4 +1,4 @@
-mcc: mcc.fs
+mcc: mcc.fs CLex.fs CPar.fs
 	fsharpc --nologo -r ../Week40/MicroC/FSharp.PowerPack.dll Absyn.fs CPar.fs CLex.fs Parse.fs Machine.fs Comp.fs ParseAndComp.fs mcc.fs > /dev/null
 
 CLex.fs: CLex.fsl
