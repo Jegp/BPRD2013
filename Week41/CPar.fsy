@@ -15,7 +15,7 @@ let nl = CstI 10
 %token <string> CSTSTRING NAME
 
 %token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE
-%token PLUS MINUS TIMES DIV MOD
+%token PLUS MINUS TIMES DIV MOD PLUSPLUS MINUSMINUS
 %token EQ NE GT LT GE LE
 %token NOT SEQOR SEQAND
 %token LPAR RPAR LBRACE RBRACE LBRACK RBRACK SEMI COMMA ASSIGN AMP
@@ -133,6 +133,11 @@ ExprNotAccess:
   | Expr LE    Expr                     { Prim2("<=", $1, $3) }
   | Expr SEQAND Expr                    { Andalso($1, $3)     }
   | Expr SEQOR  Expr                    { Orelse($1, $3)      }
+  | MINUSMINUS Access                   { PreDec $2           }
+  | PLUSPLUS Access                     { PreInc $2           }
+  | MINUSMINUS ExprNotAccess            { Prim2("-", $2, CstI 1) }
+  | PLUSPLUS ExprNotAccess              { Prim2("+", $2, CstI 1) }
+
 ;
 
 AtExprNotAccess:
@@ -146,7 +151,7 @@ Access:
   | LPAR Access RPAR                    { $2                  }  
   | TIMES Access                        { AccDeref (Access $2)}
   | TIMES AtExprNotAccess               { AccDeref $2         }
-  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    }   
+  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    }
 ;
 
 Exprs:
