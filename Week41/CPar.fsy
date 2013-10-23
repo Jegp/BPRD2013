@@ -9,12 +9,21 @@ open Absyn
 
 let compose1 f (g, s) = ((fun x -> g(f(x))), s)
 let nl = CstI 10
+let rec ifNest g = function
+  | (c, e)::xs -> If(Prim2("==", g, c), e, ifNest g xs)
+  | [] -> Block [];;
+let ifn a b =
+  printfn "%A" "nesting ifs from"
+  let res = ifNest a b
+  printfn "%A" res
+  res;;
+
 %}
 
 %token <int> CSTINT CSTBOOL
 %token <string> CSTSTRING NAME
 
-%token CHAR ELSE IF COLON QUESTION INT NULL PRINT PRINTLN RETURN VOID WHILE
+%token CHAR ELSE IF COLON QUESTION CASE SWITCH INT NULL PRINT PRINTLN RETURN VOID WHILE
 %token PLUS MINUS TIMES DIV MOD PLUSPLUS MINUSMINUS
 %token EQ NE GT LT GE LE
 %token NOT SEQOR SEQAND
@@ -99,7 +108,13 @@ StmtM:  /* No unbalanced if-else */
   | RETURN Expr SEMI                    { Return(Some($2))     }
   | Block                               { $1                   }
   | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }
+  | SWITCH LPAR Expr RPAR Case          { ifn $3 $5         }
   | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }
+;
+
+Case:
+    CASE Expr COLON LBRACK Stmt RBRACK  { [($2, $5)]           }
+  | Case Case                           { $1 @ $2              }
 ;
 
 StmtU:
