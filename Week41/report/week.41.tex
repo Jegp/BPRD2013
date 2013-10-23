@@ -15,7 +15,7 @@
 \maketitle
 \section*{8.1}
 \subsection*{ex3.c}
-\begin{lstlisting}[numbers=left, firstnumber=0]
+\begin{lstlisting}[numbers=left, firstnumber=0, title=ex3.c]
             LDARGS
             CALL (1,"L1")         //call main
             STOP                  //halt after main returns
@@ -63,7 +63,7 @@ Label "L3"  GETBP
 \end{lstlisting}
 
 \subsection*{ex.5.c}
-\begin{lstlisting}[numbers=left, firstnumber=0]
+\begin{lstlisting}[numbers=left, firstnumber=0, title=ex5.c]
             LDARGS
             CALL (1,"L1")         //call main
             STOP                  //halt after main returns here
@@ -124,7 +124,7 @@ Label "L2"  GETBP
 \end{lstlisting}
 \subsection*{ex.3.c trace}
 %[stack] {pc: instr param}
-\begin{lstlisting}[numbers=left, firstnumber=0]
+\begin{lstlisting}[numbers=left, title=ex.3.c.trace]
 [ ]{0: LDARGS}
 [ 4 ]{1: CALL 1 5}                     //call main with 1 arg (4)
 [ 4 -999 4 ]{5: INCSP 1}               //make space for variable i
@@ -261,4 +261,148 @@ Label "L2"  GETBP
 [ 4 -999 4 ]{58: RET 0}                //void-return from main
 [ 4 ]{4: STOP}                         //halt
 \end{lstlisting}
+
+\section*{8.4}
+\subsection*{ex8.c vs prog1}
+\begin{lstlisting}[numbers=left, title=ex8.c]
+            LDARGS
+            CALL (0,"L1")
+            STOP
+
+Label "L1"  INCSP 1
+            GETBP
+            CSTI 0
+            ADD
+            CSTI 20000000
+            STI
+            INCSP -1
+            GOTO "L3"
+
+Label "L2"  GETBP
+            CSTI 0
+            ADD
+            GETBP
+            CSTI 0
+            ADD
+            LDI
+            CSTI 1
+            SUB
+            STI
+            INCSP -1
+            INCSP 0
+
+Label "L3"  GETBP
+            CSTI 0
+            ADD
+            LDI
+            IFNZRO "L2"
+            INCSP -1
+            RET -1
+\end{lstlisting}
+\begin{lstlisting}[numbers=left, title=prog1]
+0 20000000         //CSTI 20000000
+16 7               //GOTO 7
+0 1                //CSTI 1
+2                  //ADD
+9                  //DUP
+18 4               //IFNZERO 4
+25                 //STOP
+\end{lstlisting}
+The generated instructions include code to call, and return
+form, a function main. More importantly: it implements the
+while loop by continuously incrementing and decrementing the stack-pointer and
+using LDI to load the contents of $i$, in both the while guard and body,
+whereas the hand-typed machine instructions in prog1 completely ignores the
+concepts of pointers (and functions).
+\begin{lstlisting}[numbers=left, title=ex13.c]
+            LDARGS
+            CALL (1,"L1")
+            STOP
+
+Label "L1"  INCSP 1               //var initiation
+            GETBP
+            CSTI 1
+            ADD
+            CSTI 1889
+            STI
+            INCSP -1
+            GOTO "L3"
+
+Label "L2"  GETBP
+            CSTI 1
+            ADD
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            CSTI 1
+            ADD
+            STI                   //y=y+1
+            INCSP -1
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            CSTI 4
+            MOD
+            CSTI 0
+            EQ
+            IFZERO "L7"
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            CSTI 100
+            MOD
+            CSTI 0
+            EQ
+            NOT
+            IFNZRO "L9"
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            CSTI 400
+            MOD
+            CSTI 0
+            EQ
+            GOTO "L8"
+
+Label "L9"  CSTI 1
+
+Label "L8"  GOTO "L6"
+
+Label "L7"  CSTI 0
+
+Label "L6"  IFZERO "L4"
+            GETBP
+            CSTI 1
+            ADD
+            LDI
+            PRINTI
+            INCSP -1
+            GOTO "L5"
+
+Label "L4"  INCSP 0
+
+Label "L5"  INCSP 0
+
+Label "L3"  GETBP
+            CSTI 1
+            ADD
+            LDI
+            GETBP
+            CSTI 0
+            ADD
+            LDI
+            LT
+            IFNZRO "L2"
+            INCSP -1
+            RET 0
+\end{lstlisting}
+In addition to loading up $y$ every time it is used, rather than just leaving
+it on the stack, the code does an insane amount of jumping to implement the
+short-circuiting boolean operations. It should be adequate to have \emph{one}
+label for (re)entering the while loop, and one for skipping it (when $y\ge n$).
+
 \end{document}
