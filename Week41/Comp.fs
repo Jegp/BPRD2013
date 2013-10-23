@@ -163,10 +163,17 @@ and cStmtOrDec stmtOrDec (varEnv : varEnv) (funEnv : funEnv) : varEnv * instr li
 
 and cExpr (e : expr) (varEnv : varEnv) (funEnv : funEnv) : instr list = 
     match e with
-    | Access acc     -> cAccess acc varEnv funEnv @ [LDI] 
+    | Access acc     -> cAccess acc varEnv funEnv @ [LDI]
     | Assign(acc, e) -> cAccess acc varEnv funEnv @ cExpr e varEnv funEnv @ [STI]
     | CstI i         -> [CSTI i]
     | Addr acc       -> cAccess acc varEnv funEnv
+    | IfExp (expr1, expr2, expr3) ->
+      let labelse = newLabel()
+      let labend  = newLabel()
+      cExpr expr1 varEnv funEnv @ [IFZERO labelse]
+      @ cExpr expr2 varEnv funEnv @ [GOTO labend]
+      @ [Label labelse] @ cExpr expr3 varEnv funEnv
+      @ [Label labend]
     | PreInc acc -> cAccess acc varEnv funEnv @ [DUP; LDI; CSTI 1; ADD; STI]
     | PreDec acc -> cAccess acc varEnv funEnv @ [DUP; LDI; CSTI 1; SUB; STI]
     | Prim1(ope, e1) ->
