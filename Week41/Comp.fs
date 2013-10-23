@@ -122,6 +122,15 @@ let rec cStmt stmt (varEnv : varEnv) (funEnv : funEnv) : instr list =
       @ cStmt stmt1 varEnv funEnv @ [GOTO labend]
       @ [Label labelse] @ cStmt stmt2 varEnv funEnv
       @ [Label labend]           
+    //| Case(gEx, stms) ->
+    //    let guard, (cases, stms) = cExpr gEx varEnv funEnv, List.unzip stms
+    //    let labels = List.map (fun x -> newLabel()) [1..cases.Length] //make n new labels
+    //    let lastLab = labels.[labels.Length - 1]
+    //    guard @ List.map3 (fun label case statement ->
+    //                        [DUP] @ [ CSTI case; EQ; DUP; IFZERO label ]
+    //                        @ cStmt statement varEnv funEnv
+    //                        @ [ GOTO lastLab ]
+    //                        @ [ Label label ]) labels cases stms
     | While(e, body) ->
       let labbegin = newLabel()
       let labtest  = newLabel()

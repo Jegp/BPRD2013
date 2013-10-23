@@ -9,14 +9,6 @@ open Absyn
 
 let compose1 f (g, s) = ((fun x -> g(f(x))), s)
 let nl = CstI 10
-let rec ifNest g = function
-  | (c, e)::xs -> If(Prim2("==", g, c), e, ifNest g xs)
-  | [] -> Block [];;
-let ifn a b =
-  printfn "%A" "nesting ifs from"
-  let res = ifNest a b
-  printfn "%A" res
-  res;;
 
 %}
 
@@ -108,13 +100,16 @@ StmtM:  /* No unbalanced if-else */
   | RETURN Expr SEMI                    { Return(Some($2))     }
   | Block                               { $1                   }
   | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }
-  | SWITCH LPAR Expr RPAR Case          { ifn $3 $5         }
+  | SWITCH LPAR Expr RPAR LBRACK Cases RBRACK        { Case($3, $6)         }
   | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }
 ;
 
 Case:
-    CASE Expr COLON LBRACK Stmt RBRACK  { [($2, $5)]           }
-  | Case Case                           { $1 @ $2              }
+    CASE CSTINT COLON LBRACK Stmt RBRACK  { ($2, $5)             }
+
+Cases:
+    Case                                 { [$1]   }
+  | Case Cases                           { $1 :: $2              }
 ;
 
 StmtU:
