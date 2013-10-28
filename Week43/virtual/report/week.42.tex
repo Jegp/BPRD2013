@@ -135,4 +135,17 @@ IL_0047:  ret
 54: goto 2                        jmp to for guard
 57: return
 \end{lstlisting}
+
+
+\subsection*{9.3 Queue with mistake}
+In the $put$ method in the SentinelLockQueue class it first creates a new Node instance, 
+sets the $next$ variable of the new node to $null$ and then 'chains' it to the $next$ 
+variable of the $tail$ node, hence creating a long line of nodes in the queue as expected. 
+However, the $put$ method does not tamper with the $head$ elemnt, which is used in the $get$ 
+method (as expected of a queue). In other words $head.next$ will \textit{always} refer to 
+$null$ and no elements will be 'popped' off the queue, since $get$ always will return -999. 
+Since this happens in 19 * (19 + 1) / 2 (= 190) threads this means that the program will 
+asynchronously put 190 * 1000000 (= 180000000) integers on the heap; a total of 
+190000000 * 4 = 760000000 bytes, or 760 megabytes.
+
 \end{document}
