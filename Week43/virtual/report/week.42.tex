@@ -14,7 +14,7 @@
 \author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
 \maketitle
 \section*{9.1}
-\subsection*{Selsort.il}
+\subsection*{9.1(i) Selsort.il}
 \begin{lstlisting}[numbers=left, firstnumber=0, title=Selsort.il]
 // method line 2
 .method public static hidebysig 
@@ -86,5 +86,53 @@ IL_0042:  blt IL_0007             //if enter, jmp to for body
 
 IL_0047:  ret 
 } // end of method Selsort::SelectionSort
+\end{lstlisting}
+\subsection*{9.1(ii) Selsort.jvmbytecode}
+\begin{lstlisting}[numbers=left, firstnumber=0, title=Selsort.jvmbytecode]
+  public static void SelectionSort(int[]); flags: ACC_PUBLIC, ACC_STATIC Code: stack=4, locals=4, args_size=1
+0: iconst_0
+1: istore_1                       //store 0
+2: iload_1                        //for guard
+3: aload_0                        //push arr
+4: arraylength                    //push arr length
+5: if_icmpge 57                   //jmp to halt if i > arr len
+8: iload_1                        //push i
+9: istore_2                       //save to least
+10: iload_1                       //push i
+11: iconst_1
+12: iadd                          //i+1
+13: istore_3                      //j=i+1
+14: iload_3                       //inner-for guard
+15: aload_0
+16: arraylength
+17: if_icmpge 37                  //if j > arrlen, jmp to <??>
+20: aload_0                       //push arr
+21: iload_3                       //and j
+22: iaload                        //arr[j]
+23: aload_0                       //arr
+24: iload_2                       //least
+25: iaload                        //arr[least]
+26: if_icmpge 31                  //jmp to <??> if arr[j] > arr[least]
+29: iload_3                       //push j       
+30: istore_2                      //store to least
+31: iinc 3, 1                     //j++
+34: goto 14                       //jmp to inner-for guard
+37: aload_0
+38: iload_1
+39: iaload                        //arr[i]
+40: istore_3                      //tmp=arr[i]
+41: aload_0
+42: iload_1
+43: aload_0
+44: iload_2
+45: iaload                        //arr[least]
+46: iastore                       //arr[i] = arr[least]
+47: aload_0
+48: iload_2
+49: iload_3
+50: iastore                       //arr[least] = tmp
+51: iinc 1, 1                     //i++
+54: goto 2                        jmp to for guard
+57: return
 \end{lstlisting}
 \end{document}
