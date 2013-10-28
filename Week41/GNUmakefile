@@ -1,4 +1,4 @@
-mcc.exe: mcc.fs CLex.fs CPar.fs Comp.fs
+mcc.exe: mcc.fs CLex.fs CPar.fs Comp.fs Absyn.fs
 	fsharpc --nologo -r FSharp.PowerPack.dll Absyn.fs CPar.fs CLex.fs Parse.fs Machine.fs Comp.fs ParseAndComp.fs mcc.fs > /dev/null
 
 report: report/tmp/week.41.pdf

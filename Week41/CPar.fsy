@@ -100,16 +100,19 @@ StmtM:  /* No unbalanced if-else */
   | RETURN Expr SEMI                    { Return(Some($2))     }
   | Block                               { $1                   }
   | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }
-  | SWITCH LPAR Expr RPAR LBRACK Cases RBRACK        { Case($3, $6)         }
+  | SWITCH LPAR Expr RPAR LBRACE Cases RBRACE
+                                        { Case($3, $6)         }
   | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }
 ;
 
 Case:
-    CASE CSTINT COLON LBRACK Stmt RBRACK  { ($2, $5)             }
+    CASE Const COLON LBRACE Stmt RBRACE
+                                        { ($2, $5)             }
+;
 
 Cases:
-    Case                                 { [$1]   }
-  | Case Cases                           { $1 :: $2              }
+    Case                                { [$1]                 }
+  | Case Cases                          { $1 :: $2             }
 ;
 
 StmtU:
