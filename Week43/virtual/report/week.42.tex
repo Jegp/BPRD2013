@@ -136,16 +136,16 @@ IL_0047:  ret
 57: return
 \end{lstlisting}
 
-
 \subsection*{9.3 Queue with mistake}
-In the $put$ method in the SentinelLockQueue class it first creates a new Node instance, 
-sets the $next$ variable of the new node to $null$ and then 'chains' it to the $next$ 
-variable of the $tail$ node, hence creating a long line of nodes in the queue as expected. 
-However, the $put$ method does not tamper with the $head$ elemnt, which is used in the $get$ 
-method (as expected of a queue). In other words $head.next$ will \textit{always} refer to 
-$null$ and no elements will be 'popped' off the queue, since $get$ always will return -999. 
-Since this happens in 19 * (19 + 1) / 2 (= 190) threads this means that the program will 
-asynchronously put 190 * 1000000 (= 180000000) integers on the heap; a total of 
-190000000 * 4 = 760000000 bytes, or 760 megabytes.
+The \emph{dummy} node is always in scope. The \emph{dummy.next} always refers to the
+first element added the queue (or null, initially), regardless of whether or not
+it has been popped. This holds for \emph{dummy.next.next} and the node added
+secondly. (apply induction from here on out). This means that all added nodes
+(again, regardless of whether they have been popped) are within scope as long as
+the \emph{dummy} node is within scope, which is always.
+A possible solution is to fix the \emph{.next} references when popping elements.
+A slightly more elegant solution is to declare dummy in the constructor. That
+way the dummy (and hence all popped nodes) will be out of scope, and hence
+collectable by the garbage collector.
 
 \end{document}
