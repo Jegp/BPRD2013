@@ -30,7 +30,8 @@ type expr =
   | FromTo of int * int
   | Write of expr
   | If of expr * expr * expr
-  | Prim of string * expr * expr 
+  | Prim of string * expr * expr
+  | Unary of string * expr
   | And of expr * expr
   | Or  of expr * expr
   | Seq of expr * expr
@@ -88,6 +89,17 @@ let rec eval (e : expr) (cont : cont) (econt : econt) =
               | _ -> Str "unknown prim2")
               econt1)
           econt
+    | Unary(ope, e) ->
+      eval e (fun v -> fun econt1 ->
+              match (ope, v) with
+              | ("multiples", Int i) ->
+                let rec mul n m = 
+                  cont (Int (n * m)) (fun () -> mul (n+1) m)
+                mul i 1
+              | ("sqr", Int i) ->
+                  cont (Int(i * i)) econt1
+              | ("even", Int i) ->
+                  if ((i &&& 1) = 1) then econt1 () else cont (Int i) econt1) econt
     | And(e1, e2) -> 
       eval e1 (fun _ -> fun econt1 -> eval e2 cont econt1) econt
     | Or(e1, e2) -> 
@@ -137,8 +149,11 @@ let ex8 = Write(Prim("<", CstI 4, FromTo(1, 10)));
 
 (* Exercise 11.8 *)
 // i
-let ex9  = Every(Write(Prim("+", Prim("*", CstI 2, FromTo(1, 4)), CstI 1))));;
-let ex10 = Every(Write(Prim("+", Prim("*", FromTo(2, 4), CstI 10), FromTo(1, 2)))));;
+let ex9  = Every(Write(Prim("+", Prim("*", CstI 2, FromTo(1, 4)), CstI 1)));;
+let ex10 = Every(Write(Prim("+", Prim("*", FromTo(2, 4), CstI 10), FromTo(1, 2))));;
 
 // ii
+let ex11 = Write(Prim("<", CstI 50, Prim("*", CstI 7, FromTo(0, 25))));;
 
+// iii
+let ex12 = Every(Write(Unary("sqr", CstI 3)));;
