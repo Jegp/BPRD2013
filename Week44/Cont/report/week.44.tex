@@ -37,4 +37,11 @@ Calling \emph{revc} with \emph{fun v -> v@v} you get the reversed list appended
 on the reversed list. E.g. \emph{revc [1;2;3] (fun v -> v@ v)} returns
 \emph{[3;2;1;3;2;1]}.
 
+\section*{11.8}
+\subsection*{11.8(iv)}
+We are not certain our \emph{multiples} implementation is satisfying.
+Applying \emph{Every} on \emph{multiples} runs forever, but
+\emph{And(FromTo(1,3), multiples(3))} will only return 3, not 3, 6, 9.
+Comments and suggestive nods are welcome :)
+
 \end{document}
