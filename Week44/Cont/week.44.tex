@@ -18,7 +18,8 @@
 Note to  Exercises.fs
 \section*{11.1}
 \subsection*{11.1(i)}
-
-
-
+Calling the continuation based \emph{lenc xs : int list k : int -> int : int} function with a function
+\emph{f = (fun x -> 2*x)} will return twice the list length, as the first given
+continuation is the last to be executed. (otherwise it would have returned
+\emph{length + f (0 * 2)}, i.e. the list's length.
 \end{document}
