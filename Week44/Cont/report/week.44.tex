@@ -17,9 +17,16 @@
 
 Note to  Exercises.fs
 \section*{11.1}
-\subsection*{11.1(i)}
-Calling the continuation based \emph{lenc xs : int list k : int -> int : int} function with a function
-\emph{f = (fun x -> 2*x)} will return twice the list length, as the first given
-continuation is the last to be executed. (otherwise it would have returned
-\emph{length + f (0 * 2)}, i.e. the list's length.
+\subsection*{11.1(ii)}
+Calling the continuation based \emph{lenc xs : int list k : int -> int : int}
+function with a function \emph{f = (fun x -> 2*x)} will return twice the list
+length, as the first given continuation is the last to be executed. (otherwise
+it would have returned \emph{length + f (0 * 2)}, i.e. the list's length.
+
+\subsection*{11.1(iii)}
+\emph{lenc} and \emph{leni} are essentially the same funtion. \emph{lenc}
+represents the accumulating parameter of \emph{leni} by a chain of functions,
+build and passed on in each recursive call. There exists a general
+transformation from iterative functions (such as \emph{len} and \emph{leni}) to
+an equivalent continuation based function.
 \end{document}
