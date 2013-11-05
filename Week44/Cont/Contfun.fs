@@ -254,4 +254,3 @@ let ex7 = TryWith(Prim("*", CstI 11, Raise (Exn "Outahere")),
                   Exn "Outahere", 
                   CstI 999);
 
-(* Exercise 11.1 *)
