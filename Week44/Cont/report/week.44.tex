@@ -7,12 +7,13 @@
 \usepackage{amsmath}
 \usepackage{tabularx}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
 \begin{document}
 
 \title{Week 44}
-\author{Sigurt Bladt Dinesen \\sidi{@}itu.dk 
-  \and Jens Egholm Pedersen \\jegp{@}itu.dk}
+\author{Sigurt Bladt Dinesen \\sidi@itu.dk 
+  \and Jens Egholm Pedersen \\jegp@itu.dk}
 \maketitle
 
 Note to  Exercises.fs
@@ -29,4 +30,11 @@ represents the accumulating parameter of \emph{leni} by a chain of functions,
 build and passed on in each recursive call. There exists a general
 transformation from iterative functions (such as \emph{len} and \emph{leni}) to
 an equivalent continuation based function.
+
+\section*{11.2}
+\subsection*{11.2(ii)}
+Calling \emph{revc} with \emph{fun v -> v@v} you get the reversed list appended
+on the reversed list. E.g. \emph{revc [1;2;3] (fun v -> v@ v)} returns
+\emph{[3;2;1;3;2;1]}.
+
 \end{document}
