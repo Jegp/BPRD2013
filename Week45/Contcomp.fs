@@ -35,6 +35,11 @@ type bstmtordec =
 
 (* Code-generating functions that perform local optimizations *)
 
+let addIFZERO lab3 C =
+    match C with
+    | GOTO lab :: lab3 :: c1 -> IFNZRO lab :: lab3 :: c1
+    | _ -> IFZERO lab3 :: C
+
 let rec addINCSP m1 C : instr list =
     match C with
     | INCSP m2            :: C1 -> addINCSP (m1+m2) C1
@@ -73,8 +78,8 @@ let rec deadcode C =
 let addNOT C =
     match C with
     | NOT        :: C1 -> C1
-    | IFZERO lab :: C1 -> IFNZRO lab :: C1 
-    | IFNZRO lab :: C1 -> IFZERO lab :: C1 
+    | IFZERO lab :: C1 -> IFNZRO lab :: C1
+    | IFNZRO lab :: C1 -> addIFZERO lab C1
     | _                -> NOT :: C
 
 let addJump jump C =                    (* jump is GOTO or RET *)
@@ -102,8 +107,10 @@ let rec addCST i C =
     | (_, IFZERO lab :: C1) -> C1
     | (0, IFNZRO lab :: C1) -> C1
     | (_, IFNZRO lab :: C1) -> addGOTO lab C1
+    | (x, CSTI(y) :: LT :: C1) -> if x<y then addCST 1 C1 else addCST 0 C1
+    | (x, CSTI(y) :: EQ :: C1) -> if x=y then addCST 1 C1 else addCST 0 C1
     | _                     -> CSTI i :: C
-            
+
 (* ------------------------------------------------------------------- *)
 
 (* Simple environment operations *)
@@ -188,18 +195,18 @@ let rec cStmt stmt (varEnv : varEnv) (funEnv : funEnv) (C : instr list) : instr 
     | If(e, stmt1, stmt2) -> 
       let (jumpend, C1) = makeJump C
       let (labelse, C2) = addLabel (cStmt stmt2 varEnv funEnv C1)
-      cExpr e varEnv funEnv (IFZERO labelse 
-       :: cStmt stmt1 varEnv funEnv (addJump jumpend C2))
+      cExpr e varEnv funEnv (addIFZERO labelse
+       (cStmt stmt1 varEnv funEnv (addJump jumpend C2)))
     | While(e, body) ->
       let labbegin = newLabel()
       let (jumptest, C1) = 
            makeJump (cExpr e varEnv funEnv (IFNZRO labbegin :: C))
       addJump jumptest (Label labbegin :: cStmt body varEnv funEnv C1)
     | Expr e -> 
-      cExpr e varEnv funEnv (addINCSP -1 C) 
+      cExpr e varEnv funEnv (addINCSP -1 C)
     | Block stmts -> 
       let rec pass1 stmts ((_, fdepth) as varEnv) =
-          match stmts with 
+          match stmts with
           | []     -> ([], fdepth)
           | s1::sr ->
             let (_, varEnv1) as res1 = bStmtordec s1 varEnv
@@ -272,18 +279,18 @@ and cExpr (e : expr) (varEnv : varEnv) (funEnv : funEnv) (C : instr list) : inst
     | Andalso(e1, e2) ->
       match C with
       | IFZERO lab :: _ ->
-         cExpr e1 varEnv funEnv (IFZERO lab :: cExpr e2 varEnv funEnv C)
+         cExpr e1 varEnv funEnv (addIFZERO lab (cExpr e2 varEnv funEnv C))
       | IFNZRO labthen :: C1 -> 
         let (labelse, C2) = addLabel C1
         cExpr e1 varEnv funEnv
-           (IFZERO labelse 
-              :: cExpr e2 varEnv funEnv (IFNZRO labthen :: C2))
+           (addIFZERO labelse (
+               cExpr e2 varEnv funEnv (IFNZRO labthen :: C2)))
       | _ ->
         let (jumpend,  C1) = makeJump C
         let (labfalse, C2) = addLabel (addCST 0 C1)
         cExpr e1 varEnv funEnv
-          (IFZERO labfalse 
-             :: cExpr e2 varEnv funEnv (addJump jumpend C2))
+          (addIFZERO labfalse (
+             cExpr e2 varEnv funEnv (addJump jumpend C2)))
     | Orelse(e1, e2) -> 
       match C with
       | IFNZRO lab :: _ -> 
@@ -292,7 +299,7 @@ and cExpr (e : expr) (varEnv : varEnv) (funEnv : funEnv) (C : instr list) : inst
         let(labelse, C2) = addLabel C1
         cExpr e1 varEnv funEnv
            (IFNZRO labelse :: cExpr e2 varEnv funEnv
-             (IFZERO labthen :: C2))
+             (addIFZERO labthen C2))
       | _ ->
         let (jumpend, C1) = makeJump C
         let (labtrue, C2) = addLabel(addCST 1 C1)
@@ -367,3 +374,4 @@ let contCompileToFile program fname =
     intsToFile bytecode fname; instrs
 
 (* Example programs are found in the files ex1.c, ex2.c, etc *)
+// vim: set ts=2 sw=2 et:
