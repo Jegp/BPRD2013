@@ -72,14 +72,12 @@
 \newcommand{\LOOKUP}[2]{#1\left(#2\right)}
 
 
-\title{A Tutorial on Polymorphic Type Derivations}
-\author{David Christiansen}
-\date{DRAFT of December 27, 2012}
-\begin{document}
 
+\begin{document}
 \title{Week 38}
 \author{Sigurt Bladt Dinesen \\sidi{@}itu.dk \and Jens Egholm Pedersen \\jegp{@}itu.dk}
 \maketitle
+\pagebreak
 \section*{Exercise 6.1 (PLC)}
 \subsection*{Is the result of the third one as expected?}
 \begin{verbatim}
@@ -92,7 +90,10 @@
 We would expect $add\ x$ to return a function $f\ of\ y$ that in turn returns x+y.
 We would expect $addtwo$ to increment its (integer) input by 2, and the entire expression
 to return 7.
-The $let\ x = 77$ in line 3 means nothing. x from line 1 is not overwritten, only "shadowed".
+The $let\ x = 77$ in line 3 means nothing. x from line 1 is not overwritten but
+in a different scope, because the micro-ML language is statically scoped. Hence,
+the two x variables are not kept in the same environment at runtime.
+
 
 \subsection*{Explain the result of the last one}
 \begin{verbatim}
