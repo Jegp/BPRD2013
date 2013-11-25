@@ -17,6 +17,13 @@ Regex: $a|(ba|b)+$
 \includegraphics[height=250px]{3-2-nfa.png} &
 	\includegraphics[height=250px]{3-2-dfa.png}
 \end{tabular}
+\subsection*{Question for TA}
+We are in doubt about some of the conventions when drawing automata:
+If our NFA is run on the string "aa", we would expect either failure, or
+two separate matches, one for each "a", depending on the way the NFA is applied.
+Here is the question: When in state \emph{a}, if the next input is "a", does the
+NFA 'start over' or is just left in that state, effectively accepting the string
+"aa" bacause \emph{a} has an epsilon transition to an accepting state?
 
 \section*{3.3}
 
@@ -36,7 +43,9 @@ B & EXPR\#1 & z & Var z
 \end{tabular}
 
 \section*{3.4}
-
+\begin{verbatim}
+let z = 17 in z + 2 * 3 end EOF
+\end{verbatim}
 \includegraphics[height=300px]{3-4.png}
 
 \section*{3.6}
