@@ -7,13 +7,14 @@ digraph tree {
 	Let -> {"3Expr" "7Expr" "2Expr" end} //Var z + 2 * 3
 	"3Expr" -> NAME -> "z"
 	"7Expr" -> {"3CSTINT" [label=CSTINT]} -> "17"
-	PLUS -> {"2NAME" [label=NAME]} -> {"2z" [label=z]}
+	PLUS -> {"8Expr" [label=Expr]} ->{"2NAME" [label=NAME]} -> {"2z" [label=z]}
 	PLUS -> "+"
-	"2Expr" -> { PLUS} -> { "4Expr" [label=Expr]}
-	"4Expr" -> {"5Expr" [label=Expr] TIMES "6Expr" [label=Expr]}
-	TIMES -> "*"
-	"6Expr" -> CSTINT -> "3"
-	"5Expr" -> "2CSTINT" -> "2"
+	"2Expr" -> {PLUS} -> { "4Expr" [label=Expr]}
+	"4Expr" -> TIMES
+	{"5Expr" [label=Epxr]} -> "2CSTINT" -> "2"
+	"*"
+	{"6Expr" [label=Expr]} -> CSTINT -> "3"
+	TIMES -> {"6Expr" "*" "5Expr"}
 	"2CSTINT" [label=CSTINT]
 }
 // Let z = (17) in 5 + Var z * 3 end EOF
