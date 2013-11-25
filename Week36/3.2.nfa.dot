@@ -5,7 +5,7 @@ digraph nfa {
 	Start -> Whatever;
 	Whatever [label=" "];
 	Whatever -> a [label=a];
-	Whatever -> b [label=ε];
+	Whatever -> b [label=b];
 	a -> b [label=b];
 	a -> End [label=ε];
 	b -> Whatever [label=ε];

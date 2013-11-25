@@ -20,17 +20,19 @@ Regex: $a|(ba|b)+$
 
 \section*{3.3}
 
-\begin{tabular}{l l l}
-\textbf{Label} & \textbf{Input} & \textbf{Derivation} \\
-EXPR\#0 & LET z = (17) IN z + 2 * 3 END EOF & MAIN EXPR\#1 EOF \\
-EXPR\#1 & LET z = (17) IN z + 2 * 3 END & LET NAME = EXPR\#2 IN EXPR\#3 \\
-EXPR\#3 & z + 2 * 3 & VAR z + EXPR\#4 \\
-EXPR\#4 & 2 * 3 & CstI 2 TIMES CstI 3 \\
-EXPR\#3 & z + & Var z ADD EXPR\#4 \\
-EXPR\#2 & (17) IN & CstI 17 \\
-NAME    & z & VAR z \\
--       & - & MAIN
-
+\begin{tabular}{l l l l}
+\textbf{Rule} & \textbf{Label} & \textbf{Input} & \textbf{Derivation} \\
+A & EXPR\#0 & LET z = (17) IN z + 2 * 3 END EOF & EXPR\#1 EOF \\
+F & EXPR\#1 & LET z = (17) IN z + 2 * 3 END & LET NAME = EXPR\#2 IN EXPR\#3 \\
+G & EXPR\#4 & z + 2 * 3 & Prim("*", EXPR\#5, EXPR\#6) \\
+C & EXPR\#5 & z + 2 * 3 & CstI 2 \\
+C & EXPR\#6 & z + 2 * 3 & CstI 3 \\
+H & EXPR\#3 & z + & Prim("+", EXPR\#7, \\
+  &         &     & \quad Prim("*", CstI 2, CstI 3)) \\
+B & EXPR\#7 & z & Var z \\
+E & EXPR\#2 & (17) & 17 \\
+C & EXPR\#2 & 17 & CstI 17 \\
+B & EXPR\#1 & z & Var z 
 \end{tabular}
 
 \section*{3.4}
@@ -40,8 +42,8 @@ NAME    & z & VAR z \\
 \section*{3.6}
 
 \begin{verbatim}
-let compString code =
-  scomp (fromString code)
+let compString code = 
+  scomp (fromString code) []
 \end{verbatim}
 
 \end{document}
