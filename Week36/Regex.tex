@@ -5,6 +5,13 @@
 
 \begin{document}
 
+\section*{Re-hand-in}
+This version is an attempt to correct our grievous mistakes in 3.2 where we updated our NFA to not allow the empty string, as per our regex. We also have a question for you in this section. 
+In 3.3 we used the rules defined in section 3.6 in the book and restructured the derivations to fit the actual AST.
+In 3.4 the tree have been fixed. And lastly an empty environment was added to the compString method definition.
+
+Happy reading :-)
+
 \section*{3.2}
 
 Regex: $a|(ba|b)+$
@@ -26,7 +33,6 @@ NFA 'start over' or is just left in that state, effectively accepting the string
 "aa" bacause \emph{a} has an epsilon transition to an accepting state?
 
 \section*{3.3}
-
 \begin{tabular}{l l l l}
 \textbf{Rule} & \textbf{Label} & \textbf{Input} & \textbf{Derivation} \\
 A & EXPR\#0 & LET z = (17) IN z + 2 * 3 END EOF & EXPR\#1 EOF \\
