@@ -1,0 +1,25 @@
+{
+(* File Expr/Exprlex.fsl
+   Lexer specification for the simple expression language.
+*)
+
+module ReLex
+
+open Microsoft.FSharp.Text.Lexing
+open RePar
+
+let lexemeAsString lexbuf =
+    LexBuffer<char>.LexemeString lexbuf
+}
+
+rule Token = parse
+  | [' ' '\t' '\r'] { Token lexbuf }
+  | "\n"            { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Token lexbuf }
+  | "*"             { STAR  }
+  | "("             { LPAR  }
+  | ")"             { RPAR  }
+  | "|"             { PIPE  }
+  | ['a'-'z''A'- 'Z''0'-'9'] { RE (char (LexBuffer<char>.LexemeString lexbuf)) }
+  | eof             { EOF   }
+  | _               { failwith "Lexer error: illegal symbol" }
+
